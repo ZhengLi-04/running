@@ -26,3 +26,18 @@ route.png
 route.svg
 
 .env
+# local sync data / caches
+run_page/data.db
+activities/
+Workouts/
+GPX_OUT/
+TCX_OUT/
+FIT_OUT/
+PNG_OUT/
+*.fit
+*.gpx
+*.tcx
+
+# node
+node_modules/
+dist/
