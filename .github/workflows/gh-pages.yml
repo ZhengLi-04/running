@@ -12,6 +12,9 @@ on:
         required: true
         type: string
         default: track_data
+  push:
+    branches:
+      - main
   workflow_call:
     inputs:
       save_data_in_github_cache:
