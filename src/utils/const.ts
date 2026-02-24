@@ -44,7 +44,7 @@ const ROAD_LABEL_DISPLAY = true;
 const PRIVACY_MODE = false;
 // updated on 2024/11/17: lights are turned off by default
 //set to `false` if you want to make light off as default, only effect when `PRIVACY_MODE` = false
-const LIGHTS_ON = false;
+const LIGHTS_ON = true;
 //set to `true` if you want to show the 'Elevation Gain' column
 const SHOW_ELEVATION_GAIN = false;
 // richer title for the activity types (like garmin style)
@@ -197,9 +197,7 @@ export const getRuntimeRunColor = (): string => {
 
   // Determine current theme (default to dark)
   const isDark =
-    dataTheme === 'dark' ||
-    (!dataTheme && savedTheme === 'dark') ||
-    (!dataTheme && !savedTheme);
+    dataTheme === 'dark' || (!dataTheme && savedTheme === 'dark');
 
   return isDark ? RUN_COLOR_DARK : RUN_COLOR_LIGHT;
 };
@@ -213,9 +211,7 @@ export const getRuntimeSingleRunColor = (): string => {
 
   // Determine current theme (default to dark)
   const isDark =
-    dataTheme === 'dark' ||
-    (!dataTheme && savedTheme === 'dark') ||
-    (!dataTheme && !savedTheme);
+    dataTheme === 'dark' || (!dataTheme && savedTheme === 'dark');
 
   return isDark ? SINGLE_RUN_COLOR_DARK : SINGLE_RUN_COLOR_LIGHT;
 };
