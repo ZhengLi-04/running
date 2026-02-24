@@ -30,6 +30,7 @@ jobs:
       - name: Run GPX sync test
         run: |
           # make sure the gpx_sync.py script is executable
+          mkdir -p GPX_OUT TCX_OUT FIT_OUT activities Workouts
           python run_page/gpx_sync.py
 
       - name: Check formatting (black)
