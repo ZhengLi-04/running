@@ -393,41 +393,93 @@ const Index = () => {
       <Helmet>
         <html lang="en" data-theme={theme} />
       </Helmet>
-      <div className="w-full lg:w-1/3">
-        <h1 className="my-12 mt-6 text-5xl font-extrabold italic">
-          <a href={siteUrl}>{siteTitle}</a>
-        </h1>
-        {(viewState.zoom ?? 0) <= 3 && IS_CHINESE ? (
-          <LocationStat
-            changeYear={changeYear}
-            changeCity={changeCity}
-            changeTitle={changeTitle}
-          />
-        ) : (
-          <YearsStat year={year} onClick={changeYear} />
-        )}
-      </div>
-      <div className="w-full lg:w-2/3" id="map-container">
-        <RunMap
-          title={title}
-          viewState={viewState}
-          geoData={animatedGeoData}
-          setViewState={setViewState}
-          changeYear={changeYear}
-          thisYear={year}
-          animationTrigger={animationTrigger}
-        />
-        {year === 'Total' ? (
-          <SVGStat />
-        ) : (
-          <RunTable
-            runs={runs}
-            locateActivity={locateActivity}
-            setActivity={setActivity}
-            runIndex={runIndex}
-            setRunIndex={setRunIndex}
-          />
-        )}
+      <div className="dashboard">
+        <section className="card dashboard-hero">
+          <div className="card-body">
+            <p className="eyebrow">Running Dashboard</p>
+            <h1 className="hero-title">
+              <a href={siteUrl}>{siteTitle}</a>
+            </h1>
+            <p className="hero-subtitle">
+              简洁、模块化的跑步记录面板，自动同步并持续更新。
+            </p>
+            <div className="hero-meta">
+              <span className="pill">View: {year}</span>
+              <span className="pill">{runs.length} Runs</span>
+              <span className="pill">Current Year: {thisYear}</span>
+            </div>
+          </div>
+        </section>
+
+        <div className="dashboard-grid">
+          <section className="card dashboard-sidebar">
+            <div className="card-header">
+              <h2 className="card-title">Filters</h2>
+              <p className="card-subtitle">按年份或城市快速筛选</p>
+            </div>
+            <div className="card-body">
+              {(viewState.zoom ?? 0) <= 3 && IS_CHINESE ? (
+                <LocationStat
+                  changeYear={changeYear}
+                  changeCity={changeCity}
+                  changeTitle={changeTitle}
+                />
+              ) : (
+                <YearsStat year={year} onClick={changeYear} />
+              )}
+            </div>
+          </section>
+
+          <div className="dashboard-main">
+            <section className="card map-card" id="map-container">
+              <div className="card-header">
+                <h2 className="card-title">
+                  {title || `${year} Running Heatmap`}
+                </h2>
+                <p className="card-subtitle">
+                  点击地图或热力图快速定位记录
+                </p>
+              </div>
+              <div className="card-body">
+                <RunMap
+                  title={title}
+                  viewState={viewState}
+                  geoData={animatedGeoData}
+                  setViewState={setViewState}
+                  changeYear={changeYear}
+                  thisYear={year}
+                  animationTrigger={animationTrigger}
+                />
+              </div>
+            </section>
+
+            <section className="card table-card">
+              <div className="card-header">
+                <h2 className="card-title">
+                  {year === 'Total' ? 'Year Summary' : 'Run Log'}
+                </h2>
+                <p className="card-subtitle">
+                  {year === 'Total'
+                    ? '点击热力图查看当天的跑步'
+                    : '按时间查看最近记录'}
+                </p>
+              </div>
+              <div className="card-body">
+                {year === 'Total' ? (
+                  <SVGStat />
+                ) : (
+                  <RunTable
+                    runs={runs}
+                    locateActivity={locateActivity}
+                    setActivity={setActivity}
+                    runIndex={runIndex}
+                    setRunIndex={setRunIndex}
+                  />
+                )}
+              </div>
+            </section>
+          </div>
+        </div>
       </div>
       {/* Enable Audiences in Vercel Analytics: https://vercel.com/docs/concepts/analytics/audiences/quickstart */}
       {import.meta.env.VERCEL && <Analytics />}

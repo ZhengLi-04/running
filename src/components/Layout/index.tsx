@@ -19,9 +19,9 @@ const Layout = ({ children }: React.PropsWithChildren) => {
           content="width=device-width, initial-scale=1, shrink-to-fit=no"
         />
       </Helmet>
-      <Header />
-      <div className="mx-auto mb-16 max-w-screen-2xl p-4 lg:flex lg:p-16">
-        {children}
+      <div className="page-shell">
+        <Header />
+        <main className="page-content">{children}</main>
       </div>
     </>
   );
