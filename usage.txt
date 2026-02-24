@@ -1,0 +1,46 @@
+cd /Users/LeeChung/RunningPage/running_page
+
+python3 run_page/strava_sync.py 204257 83489948a2e6c82e3aaf7fb70c407c6ad9b70f5f a8aeb98456d0764409dd22d9feb9966a7318288d --only-run
+
+
+git add -A
+git commit -m "update activities.json"
+git push
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
