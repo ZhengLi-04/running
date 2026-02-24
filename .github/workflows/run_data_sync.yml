@@ -18,8 +18,8 @@ env:
   RUN_TYPE: strava # support strava/nike/garmin/coros/garmin_cn/garmin_sync_cn_global/keep/only_gpx/only_fit/nike_to_strava/strava_to_garmin/tcx_to_garmin/strava_to_garmin_cn/garmin_to_strava/garmin_to_strava_cn/oppo/db_updater, Please change the 'pass' it to your own
   ATHLETE: Zheng
   TITLE: Zheng Running
-  MIN_GRID_DISTANCE: 10 # change min distance here
-  TITLE_GRID: Over 10km Runs # also here
+  MIN_GRID_DISTANCE: 5 # change min distance here
+  TITLE_GRID: Over 5km Runs # also here
 
   SAVE_DATA_IN_GITHUB_CACHE: false # keep data in repo so Pages always builds latest
   DATA_CACHE_PREFIX: 'track_data'
@@ -194,6 +194,7 @@ jobs:
           ATHLETE: ${{ env.ATHLETE }}
           MIN_GRID_DISTANCE: ${{ env.MIN_GRID_DISTANCE }}
         run: |
+          rm -f assets/github*.svg assets/grid.svg assets/year_summary*.svg assets/mol*.svg
           python run_page/gen_svg.py --from-db --title "$TITLE" --type github --github-style "align-firstday" --athlete "$ATHLETE" --special-distance 10 --special-distance2 20 --special-color yellow --special-color2 red --output assets/github.svg --use-localtime --min-distance 0.5
           python run_page/gen_svg.py --from-db --title "$TITLE_GRID" --type grid --athlete "$ATHLETE" --output assets/grid.svg --special-color yellow --special-color2 red --special-distance 20 --special-distance2 40 --use-localtime --min-distance "$MIN_GRID_DISTANCE"
           python run_page/gen_svg.py --from-db --type circular --use-localtime
