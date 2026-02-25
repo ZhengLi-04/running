@@ -8,7 +8,12 @@ import useActivities from '@/hooks/useActivities';
 import RoutePreview from '@/components/RoutePreview';
 import { yearSummaryStats } from '@assets/index';
 import { loadSvgComponent } from '@/utils/svgUtils';
-import { DIST_UNIT, M_TO_DIST, convertMovingTime2Sec } from '@/utils/utils';
+import {
+  DIST_UNIT,
+  M_TO_DIST,
+  convertMovingTime2Sec,
+  locationForRun,
+} from '@/utils/utils';
 import { Activity } from '@/utils/utils';
 
 const SummaryPage = () => {
@@ -16,19 +21,30 @@ const SummaryPage = () => {
   const { siteTitle } = useSiteMetadata();
   const { activities, years, cities } = useActivities();
   const [selectedYear, setSelectedYear] = useState(years[0] || '');
+  const [reportInterval, setReportInterval] = useState<
+    'year' | 'month' | 'week' | 'day' | 'life'
+  >('month');
+  const [topRunsCount, setTopRunsCount] = useState(5);
 
-  const topCities = useMemo(() => {
-    const list = Object.entries(cities);
+  const topLocations = useMemo(() => {
+    const map = new Map<string, number>();
+    activities.forEach((run) => {
+      const { city, province, country } = locationForRun(run);
+      const location =
+        city || province || country || run.location_country || 'Unknown';
+      map.set(location, (map.get(location) || 0) + run.distance);
+    });
+    const list = Array.from(map.entries());
     list.sort((a, b) => b[1] - a[1]);
     return list.slice(0, 6);
-  }, [cities]);
+  }, [activities]);
 
   const topRuns = useMemo(() => {
     return activities
       .slice()
       .sort((a, b) => b.distance - a.distance)
-      .slice(0, 5);
-  }, [activities]);
+      .slice(0, topRunsCount);
+  }, [activities, topRunsCount]);
 
   const latestRuns = useMemo(() => {
     return activities
@@ -127,14 +143,16 @@ const SummaryPage = () => {
           <section className="card summary-location">
             <div className="card-header">
               <h2 className="card-title">Locations</h2>
-              <p className="card-subtitle">跑步最频繁的地点</p>
+              <p className="card-subtitle">精确到区/街道（若可解析）</p>
             </div>
             <div className="card-body">
               <ul className="summary-list">
-                {topCities.map(([city, distance]) => (
-                  <li key={city} className="summary-list-item">
-                    <span>{city}</span>
-                    <span>{(distance / M_TO_DIST).toFixed(1)} {DIST_UNIT}</span>
+                {topLocations.map(([location, distance]) => (
+                  <li key={location} className="summary-list-item">
+                    <span>{location}</span>
+                    <span>
+                      {(distance / M_TO_DIST).toFixed(1)} {DIST_UNIT}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -143,7 +161,24 @@ const SummaryPage = () => {
 
           <section className="card summary-routes">
             <div className="card-header">
-              <h2 className="card-title">Routes</h2>
+              <div className="card-header-row">
+                <h2 className="card-title">Routes</h2>
+                <div className="summary-select">
+                  <label>
+                    Top
+                    <select
+                      value={topRunsCount}
+                      onChange={(e) => setTopRunsCount(Number(e.target.value))}
+                    >
+                      {[3, 5, 8, 10].map((v) => (
+                        <option key={v} value={v}>
+                          {v}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </div>
               <p className="card-subtitle">最长的几次跑步记录</p>
             </div>
             <div className="card-body">
@@ -163,26 +198,66 @@ const SummaryPage = () => {
 
         <section className="card summary-reports">
           <div className="card-header">
-            <h2 className="card-title">Report Builder</h2>
-            <p className="card-subtitle">
-              按年度、月度、周或单日生成统计卡片
-            </p>
+            <div className="card-header-row">
+              <div>
+                <h2 className="card-title">Report Builder</h2>
+                <p className="card-subtitle">
+                  按年度、月度、周或单日生成统计卡片
+                </p>
+              </div>
+              <div className="summary-tabs">
+                {(['year', 'month', 'week', 'day', 'life'] as const).map(
+                  (interval) => (
+                    <button
+                      key={interval}
+                      className={`filter-pill ${
+                        reportInterval === interval
+                          ? 'filter-pill-active'
+                          : ''
+                      }`}
+                      onClick={() => setReportInterval(interval)}
+                    >
+                      {interval}
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
           </div>
           <div className="card-body">
-            <ActivityList />
+            <ActivityList
+              interval={reportInterval}
+              onIntervalChange={setReportInterval}
+              hideControls
+            />
           </div>
         </section>
 
         <section className="card summary-route-grid">
           <div className="card-header">
             <h2 className="card-title">Route Grid</h2>
-            <p className="card-subtitle">最新记录优先，10 列排布</p>
+            <p className="card-subtitle">最新记录优先，8 列排布</p>
           </div>
           <div className="card-body">
             <div className="route-grid">
               {latestRuns.map((run) => (
-                <div key={run.run_id} className="route-grid-item">
-                  <RoutePreview activities={[run] as Activity[]} width={120} height={70} />
+                <div
+                  key={run.run_id}
+                  className={`route-grid-item ${
+                    run.distance / M_TO_DIST >= 10
+                      ? 'route-grid-item--10'
+                      : run.distance / M_TO_DIST >= 5
+                        ? 'route-grid-item--5'
+                        : ''
+                  }`}
+                >
+                  <RoutePreview activities={[run] as Activity[]} width={150} height={90} />
+                  <div className="route-grid-meta">
+                    <span>{run.start_date_local.slice(5, 10)}</span>
+                    <span>
+                      {(run.distance / M_TO_DIST).toFixed(1)} {DIST_UNIT}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>

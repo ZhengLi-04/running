@@ -327,8 +327,14 @@ const activityCardAreEqual = (
 
 const ActivityCard = React.memo(ActivityCardInner, activityCardAreEqual);
 
-const ActivityList: React.FC = () => {
-  const [interval, setInterval] = useState<IntervalType>('month');
+const ActivityList: React.FC<{
+  interval?: IntervalType;
+  onIntervalChange?: (_interval: IntervalType) => void;
+  hideControls?: boolean;
+}> = ({ interval: controlledInterval, onIntervalChange, hideControls }) => {
+  const [interval, setInterval] = useState<IntervalType>(
+    controlledInterval || 'month'
+  );
   const [sportType, setSportType] = useState<string>('all');
   const [sportTypeOptions, setSportTypeOptions] = useState<string[]>([]);
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
@@ -424,8 +430,19 @@ const ActivityList: React.FC = () => {
   };
 
   function toggleInterval(newInterval: IntervalType): void {
-    setInterval(newInterval);
+    if (onIntervalChange) {
+      onIntervalChange(newInterval);
+    }
+    if (!controlledInterval) {
+      setInterval(newInterval);
+    }
   }
+
+  useEffect(() => {
+    if (controlledInterval) {
+      setInterval(controlledInterval);
+    }
+  }, [controlledInterval]);
 
   function convertTimeToSeconds(time: string): number {
     const [hours, minutes, seconds] = time.split(':').map(Number);
@@ -697,35 +714,37 @@ const ActivityList: React.FC = () => {
 
   return (
     <div className={styles.activityList}>
-      <div className={styles.filterContainer} ref={filterRef}>
-        <button className={styles.smallHomeButton} onClick={handleHomeClick}>
-          {HOME_PAGE_TITLE}
-        </button>
-        <select
-          onChange={(e) => setSportType(e.target.value)}
-          value={sportType}
-        >
-          {sportTypeOptions.map((type) => (
-            <option
-              key={type}
-              value={type}
-              disabled={interval === 'life' && type !== 'all'}
-            >
-              {type}
-            </option>
-          ))}
-        </select>
-        <select
-          onChange={(e) => toggleInterval(e.target.value as IntervalType)}
-          value={interval}
-        >
-          <option value="year">{ACTIVITY_TOTAL.YEARLY_TITLE}</option>
-          <option value="month">{ACTIVITY_TOTAL.MONTHLY_TITLE}</option>
-          <option value="week">{ACTIVITY_TOTAL.WEEKLY_TITLE}</option>
-          <option value="day">{ACTIVITY_TOTAL.DAILY_TITLE}</option>
-          <option value="life">Life</option>
-        </select>
-      </div>
+      {!hideControls && (
+        <div className={styles.filterContainer} ref={filterRef}>
+          <button className={styles.smallHomeButton} onClick={handleHomeClick}>
+            {HOME_PAGE_TITLE}
+          </button>
+          <select
+            onChange={(e) => setSportType(e.target.value)}
+            value={sportType}
+          >
+            {sportTypeOptions.map((type) => (
+              <option
+                key={type}
+                value={type}
+                disabled={interval === 'life' && type !== 'all'}
+              >
+                {type}
+              </option>
+            ))}
+          </select>
+          <select
+            onChange={(e) => toggleInterval(e.target.value as IntervalType)}
+            value={interval}
+          >
+            <option value="year">{ACTIVITY_TOTAL.YEARLY_TITLE}</option>
+            <option value="month">{ACTIVITY_TOTAL.MONTHLY_TITLE}</option>
+            <option value="week">{ACTIVITY_TOTAL.WEEKLY_TITLE}</option>
+            <option value="day">{ACTIVITY_TOTAL.DAILY_TITLE}</option>
+            <option value="life">Life</option>
+          </select>
+        </div>
+      )}
 
       {interval === 'life' && (
         <div className={styles.lifeContainer}>

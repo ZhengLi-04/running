@@ -431,11 +431,11 @@
 }
 
 .summary-year {
-  grid-column: span 7;
+  grid-column: span 4;
 }
 
 .summary-location {
-  grid-column: span 5;
+  grid-column: span 8;
 }
 
 .summary-routes {
@@ -454,6 +454,12 @@
   border: 1px solid var(--color-card-border);
   padding: 12px;
   background: var(--color-card-surface);
+  overflow: hidden;
+}
+
+.summary-year-svg svg {
+  display: block;
+  margin: -12px 0;
 }
 
 .summary-list {
@@ -472,9 +478,24 @@
   border: 1px solid var(--color-card-border);
 }
 
+.summary-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.summary-select select {
+  margin-left: 6px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--color-card-border);
+  background: var(--color-card-surface);
+  color: var(--color-text-primary);
+}
+
 .summary-reports .card-body {
   padding-top: 0;
-  min-height: 520px;
+  min-height: 680px;
 }
 
 .summary-route-grid .card-body {
@@ -483,8 +504,8 @@
 
 .route-grid {
   display: grid;
-  grid-template-columns: repeat(10, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .route-grid-item {
@@ -494,9 +515,25 @@
   background: var(--color-card-surface);
 }
 
+.route-grid-item--5 {
+  border-color: #f59e0b;
+}
+
+.route-grid-item--10 {
+  border-color: #ef4444;
+}
+
+.route-grid-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  margin-top: 4px;
+}
+
 @media only screen and (max-width: 1024px) {
   .route-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 

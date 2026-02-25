@@ -51,14 +51,9 @@ class YearSummaryDrawer(TracksDrawer):
         left_width = size.x * 0.40
         right_section_start = offset.x + left_width
 
-        # Draw "Running for X Weeks" header - align with top of dots (offset.y + 8)
-        first_run_date = self._get_first_run_date()
-        if first_run_date:
-            days_ago = (datetime.datetime.now() - first_run_date).days
-            weeks_ago = max(1, days_ago // 7)
-            header_text = f"Running for {weeks_ago} Weeks"
-        else:
-            header_text = f"Year {self.year}"
+        # Draw "Runs: X" header - align with top of dots (offset.y + 8)
+        run_count = len(year_tracks)
+        header_text = f"Runs: {run_count}"
 
         dr.add(
             dr.text(
@@ -69,65 +64,8 @@ class YearSummaryDrawer(TracksDrawer):
             )
         )
 
-        # Draw distance categories
-        dr.add(
-            dr.text(
-                "Distances",
-                insert=(left_margin, offset.y + 34),
-                fill=dim_color,
-                style="font-size:6px; font-family:Arial;",
-            )
-        )
-
-        # Race format: "1  Full  2x" style - bigger font like Cursor
-        race_categories = [
-            ("Full", stats["marathon_count"]),
-            ("Half", stats["half_marathon_count"]),
-            ("10K", stats["10k_count"]),
-        ]
-
-        y_pos = offset.y + 54
-        race_num = 1
-        race_count = 0
-        for name, count in race_categories:
-            if count > 0:
-                # Number - small gray
-                dr.add(
-                    dr.text(
-                        str(race_num),
-                        insert=(left_margin, y_pos),
-                        fill=dim_color,
-                        style="font-size:8px; font-family:Arial;",
-                    )
-                )
-                # Race name - big white bold
-                dr.add(
-                    dr.text(
-                        name,
-                        insert=(left_margin + 12, y_pos),
-                        fill=text_color,
-                        style="font-size:10px; font-family:Arial; font-weight:bold;",
-                    )
-                )
-                # Count - small gray
-                dr.add(
-                    dr.text(
-                        f"{count}x",
-                        insert=(left_margin + 38, y_pos),
-                        fill=dim_color,
-                        style="font-size:6px; font-family:Arial;",
-                    )
-                )
-                y_pos += 18
-                race_num += 1
-                race_count += 1
-
-        # Draw main stats in 2x2 grid - position based on race count
-        # If no races, start earlier; otherwise position after races
-        if race_count == 0:
-            stats_start_y = offset.y + 72
-        else:
-            stats_start_y = offset.y + 54 + race_count * 18 + 26
+        # Draw main stats in 2x2 grid
+        stats_start_y = offset.y + 48
 
         # Stats title
         dr.add(
