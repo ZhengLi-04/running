@@ -478,6 +478,22 @@
 }
 
 @media only screen and (max-width: 768px) {
+  .dashboard-grid--main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .run-list-card,
+  .dashboard-main {
+    grid-column: auto;
+    width: 100%;
+  }
+
+  .dashboard-main > .card {
+    width: 100%;
+  }
+
   .dashboard-grid--main,
   .dashboard-main,
   .run-list-card,
