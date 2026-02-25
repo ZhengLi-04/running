@@ -458,6 +458,23 @@
   }
 }
 
+@media only screen and (max-width: 768px) {
+  .dashboard-grid--main,
+  .dashboard-main,
+  .run-list-card,
+  .map-card,
+  .stats-card,
+  .filter-bar {
+    width: 100%;
+  }
+
+  .mapboxgl-map,
+  .mapboxgl-canvas-container,
+  .mapboxgl-canvas {
+    width: 100% !important;
+  }
+}
+
 img::selection {
   background: transparent;
 }
