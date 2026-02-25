@@ -14,6 +14,7 @@ import {
   convertMovingTime2Sec,
   formatPace,
   locationForRun,
+  locationDetailForRun,
 } from '@/utils/utils';
 import { Activity } from '@/utils/utils';
 
@@ -30,9 +31,10 @@ const SummaryPage = () => {
   const topLocations = useMemo(() => {
     const map = new Map<string, number>();
     activities.forEach((run) => {
-      const { city, province, country } = locationForRun(run);
       const location =
-        city || province || country || run.location_country || 'Unknown';
+        locationDetailForRun(run) ||
+        run.location_country ||
+        'Unknown';
       map.set(location, (map.get(location) || 0) + run.distance);
     });
     const list = Array.from(map.entries());
@@ -132,8 +134,11 @@ const SummaryPage = () => {
     return new Set(
       activities
         .map((run) => {
-          const { city, province, country } = locationForRun(run);
-          return city || province || country || run.location_country || '';
+          return (
+            locationDetailForRun(run) ||
+            run.location_country ||
+            ''
+          );
         })
         .filter((x) => x.length > 0)
     ).size;

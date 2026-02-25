@@ -17,6 +17,7 @@ import {
   formatPace,
   formatRunTime,
   locationForRun,
+  locationDetailForRun,
   filterCityRuns,
   filterMonthRuns,
   filterYearRuns,
@@ -570,7 +571,11 @@ const Index = () => {
                 <h2 className="card-title">
                   {title || `${year} Running Map`}
                 </h2>
-                <p className="card-subtitle">地图与路线概览</p>
+                <p className="card-subtitle">
+                  {selectedRun
+                    ? locationDetailForRun(selectedRun) || '地图与路线概览'
+                    : '地图与路线概览'}
+                </p>
               </div>
               <div className="card-body">
                 <RunMap

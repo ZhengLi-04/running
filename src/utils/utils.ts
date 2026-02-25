@@ -55,6 +55,13 @@ export interface Activity {
   streak: number;
 }
 
+const areaRank = (name: string): number => {
+  if (name.endsWith('市')) return 1;
+  if (/(区|區|县|縣)$/.test(name)) return 2;
+  if (/(街道|街|镇|鎮|乡|鄉)$/.test(name)) return 3;
+  return 4;
+};
+
 const titleForShow = (run: Activity): string => {
   const date = run.start_date_local.slice(0, 11);
   const distance = (run.distance / M_TO_DIST).toFixed(2);
@@ -211,26 +218,25 @@ const locationForRun = (
   }
   if (MUNICIPALITY_CITIES_ARR.includes(city)) {
     province = city;
-    if (location) {
-      const districtMatch = extractDistricts(location);
-      if (districtMatch.length > 0) {
-        city = districtMatch[0];
-      }
-    }
-  }
-
-  // Try to extract more granular location (district/street/town) first
-  if (location) {
-    const subAreas = extractSubAreas(location);
-    if (subAreas.length > 0) {
-      const subArea = subAreas[0];
-      if (subArea) city = subArea;
-    }
   }
 
   const r = { country, province, city, coordinate };
   locationCache.set(run.run_id, r);
   return r;
+};
+
+export const locationDetailForRun = (run: Activity): string => {
+  const location = run.location_country || '';
+  if (!location) return '';
+  const { city, province, country } = locationForRun(run);
+  const subAreas = extractSubAreas(location);
+  const filtered = subAreas.filter(
+    (area) => area && area !== city && area !== province
+  );
+  filtered.sort((a, b) => areaRank(a) - areaRank(b));
+  const parts = [city, ...filtered].filter(Boolean);
+  if (parts.length > 0) return parts.join(' ');
+  return city || province || country || location;
 };
 
 const intComma = (x = '') => {
