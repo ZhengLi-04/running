@@ -110,7 +110,7 @@ const SummaryPage = () => {
         </section>
 
         <div className="summary-grid">
-          <section className="card summary-year">
+          <section className="card summary-year summary-year--full">
             <div className="card-header">
               <h2 className="card-title">Year Highlights</h2>
               <p className="card-subtitle">切换年份查看年度摘要</p>
@@ -206,7 +206,7 @@ const SummaryPage = () => {
                 </p>
               </div>
               <div className="summary-tabs">
-                {(['year', 'month', 'week', 'day', 'life'] as const).map(
+                {(['year', 'month', 'week', 'day'] as const).map(
                   (interval) => (
                     <button
                       key={interval}

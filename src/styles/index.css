@@ -431,11 +431,19 @@
 }
 
 .summary-year {
-  grid-column: span 4;
+  grid-column: span 12;
 }
 
 .summary-location {
-  grid-column: span 8;
+  grid-column: span 6;
+}
+
+.summary-routes {
+  grid-column: span 6;
+}
+
+.summary-year--full .summary-year-svg {
+  padding: 0;
 }
 
 .summary-routes {

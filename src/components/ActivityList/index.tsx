@@ -741,7 +741,6 @@ const ActivityList: React.FC<{
             <option value="month">{ACTIVITY_TOTAL.MONTHLY_TITLE}</option>
             <option value="week">{ACTIVITY_TOTAL.WEEKLY_TITLE}</option>
             <option value="day">{ACTIVITY_TOTAL.DAILY_TITLE}</option>
-            <option value="life">Life</option>
           </select>
         </div>
       )}

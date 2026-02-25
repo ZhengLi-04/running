@@ -46,126 +46,8 @@ class YearSummaryDrawer(TracksDrawer):
         # Calculate statistics
         stats = self._calculate_stats(year_tracks)
 
-        # Layout settings - left side takes about 40% width
-        left_margin = offset.x + 6
-        left_width = size.x * 0.40
-        right_section_start = offset.x + left_width
-
-        # Draw "Runs: X" header - align with top of dots (offset.y + 8)
-        run_count = len(year_tracks)
-        header_text = f"Runs: {run_count}"
-
-        dr.add(
-            dr.text(
-                header_text,
-                insert=(left_margin, offset.y + 14),
-                fill=dim_color,
-                style="font-size:6px; font-family:Arial;",
-            )
-        )
-
-        # Draw main stats in 2x2 grid
-        stats_start_y = offset.y + 48
-
-        # Stats title
-        dr.add(
-            dr.text(
-                "Stats",
-                insert=(left_margin, stats_start_y - 6),
-                fill=dim_color,
-                style="font-size:6px; font-family:Arial;",
-            )
-        )
-
-        # Format total time
-        total_hours = int(stats["total_time"] // 3600)
-
-        # Stats with separate value and unit for better layout
-        stat_items = [
-            ("Distance", f"{int(stats['total_distance'])}", self.poster.u()),
-            ("Runs", f"{stats['total_runs']}", ""),
-            ("Avg Pace", stats["avg_pace"], ""),
-            ("Streak", f"{stats['streak']}", "d"),
-            ("Time", f"{total_hours}", "h"),
-            ("Longest", f"{stats['longest_run']:.1f}", ""),
-        ]
-
-        col1_x = left_margin
-        col2_x = left_margin + 42
-
-        for i, (label, value, unit) in enumerate(stat_items):
-            x = col1_x if i % 2 == 0 else col2_x
-            y = stats_start_y + (i // 2) * 28
-
-            # Label - small gray
-            dr.add(
-                dr.text(
-                    label,
-                    insert=(x, y),
-                    fill=dim_color,
-                    style="font-size:5px; font-family:Arial;",
-                )
-            )
-            # Value - big white bold
-            dr.add(
-                dr.text(
-                    value,
-                    insert=(x, y + 11),
-                    fill=text_color,
-                    style="font-size:10px; font-family:Arial; font-weight:bold;",
-                )
-            )
-            # Unit - small gray, next to value
-            if unit:
-                # Estimate value width based on character count
-                value_width = len(value) * 6
-                dr.add(
-                    dr.text(
-                        unit,
-                        insert=(x + value_width, y + 11),
-                        fill=dim_color,
-                        style="font-size:6px; font-family:Arial;",
-                    )
-                )
-
-        # Draw Runner name and footer at bottom
-        # Calculate positions to align with bottom rows of dots
-        # Dots: y_start = offset.y + 8, height = size.y - 16, rows = 31
-        dots_y_start = offset.y + 8
-        dots_height = size.y - 16
-        dots_spacing_y = dots_height / 31
-
-        # Runner aligns with ~4th row from bottom
-        runner_row_center = dots_y_start + 27.5 * dots_spacing_y
-        runner_name = self.poster.athlete if self.poster.athlete else "Runner"
-        dr.add(
-            dr.text(
-                "Runner",
-                insert=(left_margin, runner_row_center - 4),
-                fill=dim_color,
-                style="font-size:5px; font-family:Arial;",
-            )
-        )
-        dr.add(
-            dr.text(
-                runner_name,
-                insert=(left_margin, runner_row_center + 6),
-                fill=text_color,
-                style="font-size:8px; font-family:Arial; font-weight:bold;",
-            )
-        )
-
-        # Footer aligns with last row of dots
-        dots_last_row_center = dots_y_start + 30.5 * dots_spacing_y
-        footer_y = dots_last_row_center + 3
-        dr.add(
-            dr.text(
-                f"running_page/{self.year}",
-                insert=(left_margin, footer_y),
-                fill=dim_color,
-                style="font-size:7px; font-family:Arial;",
-            )
-        )
+        # Full-width layout: only draw the monthly grid
+        right_section_start = offset.x + 6
 
         # Draw monthly dots grid on right side - VERTICAL layout like Cursor
         self._draw_monthly_grid_vertical(
@@ -173,7 +55,7 @@ class YearSummaryDrawer(TracksDrawer):
             year_tracks,
             right_section_start,
             offset.y + 8,
-            size.x - (right_section_start - offset.x) - 8,
+            size.x - 12,
             size.y - 16,
             track_color,
             special_color,
