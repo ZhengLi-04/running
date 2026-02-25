@@ -264,7 +264,8 @@ const Index = () => {
         const runYear = targetRun.start_date_local.slice(0, 4);
         if (year !== runYear) {
           setYear(runYear);
-          setCurrentFilter({ item: runYear, func: filterYearRuns });
+          setSelectedYear(runYear);
+          setSelectedMonth('Total');
         }
       } else {
         // If run doesn't exist, clear the hash and show a warning
@@ -273,7 +274,7 @@ const Index = () => {
         setSingleRunId(null);
       }
     }
-  }, [singleRunId, activities]);
+  }, [singleRunId, activities, year]);
 
   useEffect(() => {
     if (singleRunId !== null && runs.length > 0) {
