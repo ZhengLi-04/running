@@ -2,21 +2,20 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { Helmet } from 'react-helmet-async';
 import Layout from '@/components/Layout';
-import LocationStat from '@/components/LocationStat';
 import RunMap from '@/components/RunMap';
-import RunTable from '@/components/RunTable';
-import SVGStat from '@/components/SVGStat';
-import YearsStat from '@/components/YearsStat';
 import useActivities from '@/hooks/useActivities';
 import useSiteMetadata from '@/hooks/useSiteMetadata';
 import { useInterval } from '@/hooks/useInterval';
-import { IS_CHINESE } from '@/utils/const';
 import {
   Activity,
   IViewState,
+  DIST_UNIT,
+  M_TO_DIST,
+  convertMovingTime2Sec,
+  formatPace,
+  formatRunTime,
   filterAndSortRuns,
   filterCityRuns,
-  filterTitleRuns,
   filterYearRuns,
   geoJsonForRuns,
   getBoundsForGeoData,
@@ -29,7 +28,7 @@ import { useTheme, useThemeChangeCounter } from '@/hooks/useTheme';
 
 const Index = () => {
   const { siteTitle, siteUrl } = useSiteMetadata();
-  const { activities, thisYear } = useActivities();
+  const { activities, thisYear, years, cities } = useActivities();
   const themeChangeCounter = useThemeChangeCounter();
   const [year, setYear] = useState(thisYear);
   const [runIndex, setRunIndex] = useState(-1);
@@ -157,7 +156,7 @@ const Index = () => {
       func: (_run: Activity, _value: string) => boolean
     ) => {
       scrollToMap();
-      if (name != 'Year') {
+      if (name !== 'Year') {
         setYear(thisYear);
       }
       setCurrentFilter({ item, func });
@@ -196,20 +195,6 @@ const Index = () => {
     },
     [changeByItem]
   );
-
-  const changeTitle = useCallback(
-    (title: string) => {
-      changeByItem(title, 'Title', filterTitleRuns);
-    },
-    [changeByItem]
-  );
-
-  // For RunTable compatibility - create a mock setActivity function
-  const setActivity = useCallback((_newRuns: Activity[]) => {
-    // Since we're using memoized runs, we can't directly set activity
-    // This is used by RunTable but we can work around it by managing the filter instead
-    console.warn('setActivity called but runs are now computed from filters');
-  }, []);
 
   const locateActivity = useCallback(
     (runIds: RunIds) => {
@@ -388,6 +373,83 @@ const Index = () => {
 
   const { theme } = useTheme();
 
+  const yearsWithTotal = useMemo(() => {
+    const list = years.slice();
+    list.unshift(thisYear);
+    const unique = Array.from(new Set(list));
+    if (!unique.includes('Total')) unique.push('Total');
+    return unique;
+  }, [years, thisYear]);
+
+  const topCities = useMemo(() => {
+    const list = Object.entries(cities);
+    list.sort((a, b) => b[1] - a[1]);
+    return list.slice(0, 6);
+  }, [cities]);
+
+  const stats = useMemo(() => {
+    const totalRuns = runs.length;
+    const totalDistance = runs.reduce((sum, run) => sum + run.distance, 0);
+    const totalSeconds = runs.reduce(
+      (sum, run) => sum + convertMovingTime2Sec(run.moving_time),
+      0
+    );
+    const avgSpeed = totalSeconds > 0 ? totalDistance / totalSeconds : 0;
+    const avgPace = formatPace(avgSpeed);
+    const totalDistanceLabel = `${(totalDistance / M_TO_DIST).toFixed(2)} ${DIST_UNIT}`;
+    const totalDurationLabel = (() => {
+      if (totalSeconds <= 0) return '0m';
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+    })();
+    const avgHeartRate = (() => {
+      const values = runs
+        .map((run) => run.average_heartrate)
+        .filter((v): v is number => typeof v === 'number');
+      if (!values.length) return null;
+      return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+    })();
+    const totalElevation = runs.reduce(
+      (sum, run) => sum + (run.elevation_gain ?? 0),
+      0
+    );
+    const longestRun = runs.reduce(
+      (max, run) => Math.max(max, run.distance),
+      0
+    );
+    return {
+      totalRuns,
+      totalDistanceLabel,
+      totalDurationLabel,
+      avgPace,
+      avgHeartRate,
+      totalElevationLabel: `${(totalElevation / M_TO_DIST).toFixed(0)} ${DIST_UNIT}`,
+      longestRunLabel: `${(longestRun / M_TO_DIST).toFixed(2)} ${DIST_UNIT}`,
+    };
+  }, [runs]);
+
+  const heartRateSeries = useMemo(() => {
+    const values = runs
+      .filter((run) => typeof run.average_heartrate === 'number')
+      .slice(0, 20)
+      .map((run) => run.average_heartrate as number)
+      .reverse();
+    if (!values.length) return '';
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const width = 160;
+    const height = 48;
+    return values
+      .map((value, idx) => {
+        const x = (idx / Math.max(values.length - 1, 1)) * width;
+        const y =
+          height - ((value - min) / Math.max(max - min, 1)) * height + 2;
+        return `${x},${y}`;
+      })
+      .join(' ');
+  }, [runs]);
+
   return (
     <Layout>
       <Helmet>
@@ -411,22 +473,100 @@ const Index = () => {
           </div>
         </section>
 
-        <div className="dashboard-grid">
-          <section className="card dashboard-sidebar">
+        <section className="card filter-bar">
+          <div className="filter-section">
+            <span className="filter-label">Years</span>
+            <div className="filter-options">
+              {yearsWithTotal.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => changeYear(item)}
+                  className={`filter-pill ${
+                    currentFilter.func === filterYearRuns &&
+                    currentFilter.item === item
+                      ? 'filter-pill-active'
+                      : ''
+                  }`}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="filter-section">
+            <span className="filter-label">Cities</span>
+            <div className="filter-options">
+              <button
+                type="button"
+                onClick={() => changeYear(thisYear)}
+                className={`filter-pill ${
+                  currentFilter.func === filterYearRuns &&
+                  currentFilter.item === thisYear
+                    ? 'filter-pill-active'
+                    : ''
+                }`}
+              >
+                All
+              </button>
+              {topCities.map(([city]) => (
+                <button
+                  key={city}
+                  type="button"
+                  onClick={() => changeCity(city)}
+                  className={`filter-pill ${
+                    currentFilter.func === filterCityRuns &&
+                    currentFilter.item === city
+                      ? 'filter-pill-active'
+                      : ''
+                  }`}
+                >
+                  {city}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="filter-section filter-link">
+            <a href={`${siteUrl}/summary`} className="filter-summary-link">
+              查看年度总结与热力图 →
+            </a>
+          </div>
+        </section>
+
+        <div className="dashboard-grid dashboard-grid--main">
+          <section className="card run-list-card">
             <div className="card-header">
-              <h2 className="card-title">Filters</h2>
-              <p className="card-subtitle">按年份或城市快速筛选</p>
+              <h2 className="card-title">Run List</h2>
+              <p className="card-subtitle">当前筛选结果</p>
             </div>
             <div className="card-body">
-              {(viewState.zoom ?? 0) <= 3 && IS_CHINESE ? (
-                <LocationStat
-                  changeYear={changeYear}
-                  changeCity={changeCity}
-                  changeTitle={changeTitle}
-                />
-              ) : (
-                <YearsStat year={year} onClick={changeYear} />
-              )}
+              <ul className="run-list">
+                {runs.map((run) => (
+                  <li
+                    key={run.run_id}
+                    className={`run-item ${
+                      runIndex >= 0 && runs[runIndex]?.run_id === run.run_id
+                        ? 'run-item-active'
+                        : ''
+                    }`}
+                    onClick={() => locateActivity([run.run_id])}
+                  >
+                    <div className="run-item-header">
+                      <span className="run-item-title">{run.name || 'Run'}</span>
+                      <span className="run-item-date">
+                        {run.start_date_local.slice(0, 10)}
+                      </span>
+                    </div>
+                    <div className="run-item-meta">
+                      <span>
+                        {(run.distance / M_TO_DIST).toFixed(2)} {DIST_UNIT}
+                      </span>
+                      <span>{formatPace(run.average_speed)}</span>
+                      <span>{formatRunTime(run.moving_time)}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
           </section>
 
@@ -434,11 +574,9 @@ const Index = () => {
             <section className="card map-card" id="map-container">
               <div className="card-header">
                 <h2 className="card-title">
-                  {title || `${year} Running Heatmap`}
+                  {title || `${year} Running Map`}
                 </h2>
-                <p className="card-subtitle">
-                  点击地图或热力图快速定位记录
-                </p>
+                <p className="card-subtitle">地图与路线概览</p>
               </div>
               <div className="card-body">
                 <RunMap
@@ -453,29 +591,57 @@ const Index = () => {
               </div>
             </section>
 
-            <section className="card table-card">
+            <section className="card stats-card">
               <div className="card-header">
-                <h2 className="card-title">
-                  {year === 'Total' ? 'Year Summary' : 'Run Log'}
-                </h2>
-                <p className="card-subtitle">
-                  {year === 'Total'
-                    ? '点击热力图查看当天的跑步'
-                    : '按时间查看最近记录'}
-                </p>
+                <h2 className="card-title">Key Metrics</h2>
+                <p className="card-subtitle">自动汇总当前筛选结果</p>
               </div>
               <div className="card-body">
-                {year === 'Total' ? (
-                  <SVGStat />
-                ) : (
-                  <RunTable
-                    runs={runs}
-                    locateActivity={locateActivity}
-                    setActivity={setActivity}
-                    runIndex={runIndex}
-                    setRunIndex={setRunIndex}
-                  />
-                )}
+                <div className="stats-grid">
+                  <div className="stat-item">
+                    <span className="stat-label">Total Distance</span>
+                    <span className="stat-value">{stats.totalDistanceLabel}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Total Time</span>
+                    <span className="stat-value">{stats.totalDurationLabel}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Avg Pace</span>
+                    <span className="stat-value">{stats.avgPace}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Avg HR</span>
+                    <span className="stat-value">
+                      {stats.avgHeartRate ? `${stats.avgHeartRate} bpm` : '—'}
+                    </span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Elevation</span>
+                    <span className="stat-value">
+                      {stats.totalElevationLabel}
+                    </span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Longest Run</span>
+                    <span className="stat-value">{stats.longestRunLabel}</span>
+                  </div>
+                </div>
+                <div className="sparkline">
+                  <div className="sparkline-title">Heart Rate Trend</div>
+                  {heartRateSeries ? (
+                    <svg viewBox="0 0 160 52" role="img">
+                      <polyline
+                        points={heartRateSeries}
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                    </svg>
+                  ) : (
+                    <div className="sparkline-empty">No heart rate data</div>
+                  )}
+                </div>
               </div>
             </section>
           </div>
