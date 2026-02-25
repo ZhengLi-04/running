@@ -41,8 +41,8 @@ const Index = () => {
   const [currentAnimationIndex, setCurrentAnimationIndex] = useState(0);
   const [animationRuns, setAnimationRuns] = useState<Activity[]>([]);
   const [selectedYear, setSelectedYear] = useState(thisYear);
-  const [selectedMonth, setSelectedMonth] = useState('All');
-  const [selectedCity, setSelectedCity] = useState('All');
+  const [selectedMonth, setSelectedMonth] = useState('Total');
+  const [selectedCity, setSelectedCity] = useState('Total');
 
   // State to track if we're showing a single run from URL hash
   const [singleRunId, setSingleRunId] = useState<number | null>(null);
@@ -89,15 +89,15 @@ const Index = () => {
     return activities
       .filter((run) => {
         const matchYear =
-          selectedYear === 'All'
+          selectedYear === 'Total'
             ? true
             : filterYearRuns(run, selectedYear);
         const matchMonth =
-          selectedMonth === 'All'
+          selectedMonth === 'Total'
             ? true
             : filterMonthRuns(run, selectedMonth);
         const matchCity =
-          selectedCity === 'All' ? true : filterCityRuns(run, selectedCity);
+          selectedCity === 'Total' ? true : filterCityRuns(run, selectedCity);
         return matchYear && matchMonth && matchCity;
       })
       .sort(sortDateFunc);
@@ -172,6 +172,7 @@ const Index = () => {
       }
 
       setSelectedYear(y);
+      setSelectedMonth('Total');
       // Stop current animation
       setIsAnimating(false);
     },
@@ -367,15 +368,20 @@ const Index = () => {
     const list = years.slice();
     list.unshift(thisYear);
     const unique = Array.from(new Set(list));
-    return ['All', ...unique];
+    return ['Total', ...unique];
   }, [years, thisYear]);
 
   const months = useMemo(() => {
+    if (selectedYear === 'Total') {
+      return [];
+    }
     const monthSet = new Set(
-      activities.map((run) => run.start_date_local.slice(0, 7))
+      activities
+        .filter((run) => filterYearRuns(run, selectedYear))
+        .map((run) => run.start_date_local.slice(0, 7))
     );
-    return ['All', ...Array.from(monthSet).sort().reverse().slice(0, 12)];
-  }, [activities]);
+    return ['Total', ...Array.from(monthSet).sort().reverse()];
+  }, [activities, selectedYear]);
 
   const topCities = useMemo(() => {
     const list = Object.entries(cities);
@@ -451,34 +457,36 @@ const Index = () => {
               ))}
             </div>
           </div>
-          <div className="filter-section">
-            <span className="filter-label">Months</span>
-            <div className="filter-options">
-              {months.map((month) => (
-                <button
-                  key={month}
-                  type="button"
-                  onClick={() => changeMonth(month)}
-                  className={`filter-pill ${
-                    selectedMonth === month ? 'filter-pill-active' : ''
-                  }`}
-                >
-                  {month}
-                </button>
-              ))}
+          {selectedYear !== 'Total' && months.length > 0 && (
+            <div className="filter-section">
+              <span className="filter-label">Months</span>
+              <div className="filter-options">
+                {months.map((month) => (
+                  <button
+                    key={month}
+                    type="button"
+                    onClick={() => changeMonth(month)}
+                    className={`filter-pill ${
+                      selectedMonth === month ? 'filter-pill-active' : ''
+                    }`}
+                  >
+                    {month}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
           <div className="filter-section">
             <span className="filter-label">Cities</span>
             <div className="filter-options">
               <button
                 type="button"
-                onClick={() => changeCity('All')}
+                onClick={() => changeCity('Total')}
                 className={`filter-pill ${
-                  selectedCity === 'All' ? 'filter-pill-active' : ''
+                  selectedCity === 'Total' ? 'filter-pill-active' : ''
                 }`}
               >
-                All
+                Total
               </button>
               {topCities.map(([city]) => (
                 <button
