@@ -17,7 +17,6 @@ import {
   formatPace,
   formatRunTime,
   locationForRun,
-  filterAndSortRuns,
   filterCityRuns,
   filterMonthRuns,
   filterYearRuns,
@@ -41,10 +40,9 @@ const Index = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [currentAnimationIndex, setCurrentAnimationIndex] = useState(0);
   const [animationRuns, setAnimationRuns] = useState<Activity[]>([]);
-  const [currentFilter, setCurrentFilter] = useState<{
-    item: string;
-    func: (_run: Activity, _value: string) => boolean;
-  }>({ item: thisYear, func: filterYearRuns });
+  const [selectedYear, setSelectedYear] = useState(thisYear);
+  const [selectedMonth, setSelectedMonth] = useState('All');
+  const [selectedCity, setSelectedCity] = useState('All');
 
   // State to track if we're showing a single run from URL hash
   const [singleRunId, setSingleRunId] = useState<number | null>(null);
@@ -88,13 +86,22 @@ const Index = () => {
 
   // Memoize expensive calculations
   const runs = useMemo(() => {
-    return filterAndSortRuns(
-      activities,
-      currentFilter.item,
-      currentFilter.func,
-      sortDateFunc
-    );
-  }, [activities, currentFilter.item, currentFilter.func]);
+    return activities
+      .filter((run) => {
+        const matchYear =
+          selectedYear === 'All'
+            ? true
+            : filterYearRuns(run, selectedYear);
+        const matchMonth =
+          selectedMonth === 'All'
+            ? true
+            : filterMonthRuns(run, selectedMonth);
+        const matchCity =
+          selectedCity === 'All' ? true : filterCityRuns(run, selectedCity);
+        return matchYear && matchMonth && matchCity;
+      })
+      .sort(sortDateFunc);
+  }, [activities, selectedYear, selectedMonth, selectedCity]);
 
   const geoData = useMemo(() => {
     return geoJsonForRuns(runs);
@@ -153,28 +160,6 @@ const Index = () => {
     [geoData]
   );
 
-  const changeByItem = useCallback(
-    (
-      item: string,
-      name: string,
-      func: (_run: Activity, _value: string) => boolean
-    ) => {
-      scrollToMap();
-      if (name !== 'Year') {
-        setYear(thisYear);
-      }
-      setCurrentFilter({ item, func });
-      setRunIndex(-1);
-      setTitle(`${item} ${name} Running Heatmap`);
-      // Reset single run state when changing filters
-      setSingleRunId(null);
-      if (window.location.hash) {
-        window.history.pushState(null, '', window.location.pathname);
-      }
-    },
-    [thisYear]
-  );
-
   const changeYear = useCallback(
     (y: string) => {
       // default year
@@ -186,26 +171,20 @@ const Index = () => {
         });
       }
 
-      changeByItem(y, 'Year', filterYearRuns);
+      setSelectedYear(y);
       // Stop current animation
       setIsAnimating(false);
     },
-    [viewState.zoom, bounds, changeByItem]
+    [viewState.zoom, bounds]
   );
 
-  const changeCity = useCallback(
-    (city: string) => {
-      changeByItem(city, 'City', filterCityRuns);
-    },
-    [changeByItem]
-  );
+  const changeCity = useCallback((city: string) => {
+    setSelectedCity(city);
+  }, []);
 
-  const changeMonth = useCallback(
-    (month: string) => {
-      changeByItem(month, 'Month', filterMonthRuns);
-    },
-    [changeByItem]
-  );
+  const changeMonth = useCallback((month: string) => {
+    setSelectedMonth(month);
+  }, []);
 
   const locateActivity = useCallback(
     (runIds: RunIds) => {
@@ -389,14 +368,14 @@ const Index = () => {
     list.unshift(thisYear);
     const unique = Array.from(new Set(list));
     if (!unique.includes('Total')) unique.push('Total');
-    return unique;
+    return ['All', ...unique];
   }, [years, thisYear]);
 
   const months = useMemo(() => {
     const monthSet = new Set(
       activities.map((run) => run.start_date_local.slice(0, 7))
     );
-    return Array.from(monthSet).sort().reverse().slice(0, 12);
+    return ['All', ...Array.from(monthSet).sort().reverse().slice(0, 12)];
   }, [activities]);
 
   const topCities = useMemo(() => {
@@ -465,45 +444,10 @@ const Index = () => {
                   type="button"
                   onClick={() => changeYear(item)}
                   className={`filter-pill ${
-                    currentFilter.func === filterYearRuns &&
-                    currentFilter.item === item
-                      ? 'filter-pill-active'
-                      : ''
+                    selectedYear === item ? 'filter-pill-active' : ''
                   }`}
                 >
                   {item}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="filter-section">
-            <span className="filter-label">Cities</span>
-            <div className="filter-options">
-              <button
-                type="button"
-                onClick={() => changeYear(thisYear)}
-                className={`filter-pill ${
-                  currentFilter.func === filterYearRuns &&
-                  currentFilter.item === thisYear
-                    ? 'filter-pill-active'
-                    : ''
-                }`}
-              >
-                All
-              </button>
-              {topCities.map(([city]) => (
-                <button
-                  key={city}
-                  type="button"
-                  onClick={() => changeCity(city)}
-                  className={`filter-pill ${
-                    currentFilter.func === filterCityRuns &&
-                    currentFilter.item === city
-                      ? 'filter-pill-active'
-                      : ''
-                  }`}
-                >
-                  {city}
                 </button>
               ))}
             </div>
@@ -517,13 +461,36 @@ const Index = () => {
                   type="button"
                   onClick={() => changeMonth(month)}
                   className={`filter-pill ${
-                    currentFilter.func === filterMonthRuns &&
-                    currentFilter.item === month
-                      ? 'filter-pill-active'
-                      : ''
+                    selectedMonth === month ? 'filter-pill-active' : ''
                   }`}
                 >
                   {month}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="filter-section">
+            <span className="filter-label">Cities</span>
+            <div className="filter-options">
+              <button
+                type="button"
+                onClick={() => changeCity('All')}
+                className={`filter-pill ${
+                  selectedCity === 'All' ? 'filter-pill-active' : ''
+                }`}
+              >
+                All
+              </button>
+              {topCities.map(([city]) => (
+                <button
+                  key={city}
+                  type="button"
+                  onClick={() => changeCity(city)}
+                  className={`filter-pill ${
+                    selectedCity === city ? 'filter-pill-active' : ''
+                  }`}
+                >
+                  {city}
                 </button>
               ))}
             </div>
@@ -539,12 +506,10 @@ const Index = () => {
           <section className="card run-list-card">
             <div className="card-header">
               <h2 className="card-title">Run List</h2>
-              <p className="card-subtitle">当前筛选结果</p>
               <div className="run-list-meta">
-                <span className="pill">View: {year}</span>
                 <span className="pill">{runs.length} Runs</span>
-                <span className="pill">Current Year: {thisYear}</span>
               </div>
+              <p className="card-subtitle">当前筛选结果</p>
             </div>
             <div className="card-body">
               <ul className="run-list">
