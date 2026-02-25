@@ -8,7 +8,7 @@ import useActivities from '@/hooks/useActivities';
 import RoutePreview from '@/components/RoutePreview';
 import { yearSummaryStats } from '@assets/index';
 import { loadSvgComponent } from '@/utils/svgUtils';
-import { DIST_UNIT, M_TO_DIST } from '@/utils/utils';
+import { DIST_UNIT, M_TO_DIST, convertMovingTime2Sec } from '@/utils/utils';
 import { Activity } from '@/utils/utils';
 
 const SummaryPage = () => {
@@ -53,6 +53,24 @@ const SummaryPage = () => {
     return `${(sum / M_TO_DIST).toFixed(1)} ${DIST_UNIT}`;
   }, [activities]);
 
+  const totalDuration = useMemo(() => {
+    const seconds = activities.reduce(
+      (acc, run) => acc + convertMovingTime2Sec(run.moving_time),
+      0
+    );
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+  }, [activities]);
+
+  const totalCities = useMemo(() => {
+    return new Set(
+      activities
+        .map((run) => run.location_country || '')
+        .filter((x) => x.length > 0)
+    ).size;
+  }, [activities]);
+
   return (
     <Layout>
       <Helmet>
@@ -69,6 +87,8 @@ const SummaryPage = () => {
             <div className="hero-meta">
               <span className="pill">{activities.length} Activities</span>
               <span className="pill">Total Distance: {totalDistance}</span>
+              <span className="pill">Total Time: {totalDuration}</span>
+              <span className="pill">Total Cities: {totalCities}</span>
             </div>
           </div>
         </section>
