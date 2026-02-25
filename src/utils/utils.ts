@@ -435,6 +435,13 @@ const filterCityRuns = (run: Activity, city: string) => {
 const filterTitleRuns = (run: Activity, title: string) =>
   titleForRun(run) === title;
 
+const filterMonthRuns = (run: Activity, month: string) => {
+  if (run && run.start_date_local) {
+    return run.start_date_local.slice(0, 7) === month;
+  }
+  return false;
+};
+
 const filterAndSortRuns = (
   activities: Activity[],
   item: string,
@@ -516,6 +523,7 @@ export {
   geoJsonForMap,
   titleForRun,
   filterYearRuns,
+  filterMonthRuns,
   filterCityRuns,
   filterTitleRuns,
   filterAndSortRuns,

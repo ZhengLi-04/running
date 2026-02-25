@@ -19,6 +19,7 @@ import {
   locationForRun,
   filterAndSortRuns,
   filterCityRuns,
+  filterMonthRuns,
   filterYearRuns,
   geoJsonForRuns,
   getBoundsForGeoData,
@@ -195,6 +196,13 @@ const Index = () => {
   const changeCity = useCallback(
     (city: string) => {
       changeByItem(city, 'City', filterCityRuns);
+    },
+    [changeByItem]
+  );
+
+  const changeMonth = useCallback(
+    (month: string) => {
+      changeByItem(month, 'Month', filterMonthRuns);
     },
     [changeByItem]
   );
@@ -384,6 +392,13 @@ const Index = () => {
     return unique;
   }, [years, thisYear]);
 
+  const months = useMemo(() => {
+    const monthSet = new Set(
+      activities.map((run) => run.start_date_local.slice(0, 7))
+    );
+    return Array.from(monthSet).sort().reverse().slice(0, 12);
+  }, [activities]);
+
   const topCities = useMemo(() => {
     const list = Object.entries(cities);
     list.sort((a, b) => b[1] - a[1]);
@@ -437,11 +452,6 @@ const Index = () => {
             <p className="hero-subtitle">
               简洁、模块化的跑步记录面板，自动同步并持续更新。
             </p>
-            <div className="hero-meta">
-              <span className="pill">View: {year}</span>
-              <span className="pill">{runs.length} Runs</span>
-              <span className="pill">Current Year: {thisYear}</span>
-            </div>
           </div>
         </section>
 
@@ -498,6 +508,26 @@ const Index = () => {
               ))}
             </div>
           </div>
+          <div className="filter-section">
+            <span className="filter-label">Months</span>
+            <div className="filter-options">
+              {months.map((month) => (
+                <button
+                  key={month}
+                  type="button"
+                  onClick={() => changeMonth(month)}
+                  className={`filter-pill ${
+                    currentFilter.func === filterMonthRuns &&
+                    currentFilter.item === month
+                      ? 'filter-pill-active'
+                      : ''
+                  }`}
+                >
+                  {month}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="filter-section filter-link">
             <a href={`${siteUrl}/summary`} className="filter-summary-link">
               查看年度总结与热力图 →
@@ -510,6 +540,11 @@ const Index = () => {
             <div className="card-header">
               <h2 className="card-title">Run List</h2>
               <p className="card-subtitle">当前筛选结果</p>
+              <div className="run-list-meta">
+                <span className="pill">View: {year}</span>
+                <span className="pill">{runs.length} Runs</span>
+                <span className="pill">Current Year: {thisYear}</span>
+              </div>
             </div>
             <div className="card-body">
               <ul className="run-list">

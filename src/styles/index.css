@@ -341,6 +341,13 @@
   overflow-y: auto;
 }
 
+.run-list-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .run-item {
   padding: 12px 14px;
   border-radius: 14px;
