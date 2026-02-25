@@ -131,7 +131,10 @@ const SummaryPage = () => {
   const totalCities = useMemo(() => {
     return new Set(
       activities
-        .map((run) => run.location_country || '')
+        .map((run) => {
+          const { city, province, country } = locationForRun(run);
+          return city || province || country || run.location_country || '';
+        })
         .filter((x) => x.length > 0)
     ).size;
   }, [activities]);
@@ -286,7 +289,7 @@ const SummaryPage = () => {
               interval={reportInterval}
               onIntervalChange={setReportInterval}
               hideControls
-              useContainerHeight
+              useContentHeight
             />
           </div>
         </section>

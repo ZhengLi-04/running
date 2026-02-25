@@ -131,6 +131,17 @@ const extractDistricts = (str: string): string[] => {
   return locations;
 };
 
+const extractSubAreas = (str: string): string[] => {
+  const locations = [];
+  let match;
+  const pattern =
+    /([\u4e00-\u9fa5]{2,}(区|區|县|縣|市|镇|鎮|乡|鄉|街道|街))/g;
+  while ((match = pattern.exec(str)) !== null) {
+    locations.push(match[0]);
+  }
+  return locations;
+};
+
 const extractCoordinate = (str: string): [number, number] | null => {
   const pattern = /'latitude': ([-]?\d+\.\d+).*?'longitude': ([-]?\d+\.\d+)/;
   const match = str.match(pattern);
@@ -203,8 +214,17 @@ const locationForRun = (
     if (location) {
       const districtMatch = extractDistricts(location);
       if (districtMatch.length > 0) {
-        city = districtMatch[districtMatch.length - 1];
+        city = districtMatch[0];
       }
+    }
+  }
+
+  // Try to extract more granular location (district/street/town) first
+  if (location) {
+    const subAreas = extractSubAreas(location);
+    if (subAreas.length > 0) {
+      const subArea = subAreas[0];
+      if (subArea) city = subArea;
     }
   }
 

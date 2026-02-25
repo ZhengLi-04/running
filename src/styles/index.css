@@ -428,6 +428,7 @@
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 24px;
+  align-items: stretch;
 }
 
 .summary-year {
@@ -436,10 +437,14 @@
 
 .summary-location {
   grid-column: span 6;
+  display: flex;
+  flex-direction: column;
 }
 
 .summary-routes {
   grid-column: span 6;
+  display: flex;
+  flex-direction: column;
 }
 
 .summary-year--full .summary-year-svg {
@@ -467,7 +472,7 @@
 
 .summary-year-svg svg {
   display: block;
-  margin: -12px 0;
+  margin: 0;
 }
 
 .summary-year-stats {
@@ -482,6 +487,13 @@
   flex-direction: column;
   gap: 10px;
   margin-top: 12px;
+}
+
+.summary-location .card-body,
+.summary-routes .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .summary-list-item {
@@ -510,7 +522,7 @@
 
 .summary-reports .card-body {
   padding-top: 0;
-  min-height: 760px;
+  min-height: 0;
 }
 
 .summary-route-grid .card-body {

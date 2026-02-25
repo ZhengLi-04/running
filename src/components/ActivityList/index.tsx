@@ -332,11 +332,13 @@ const ActivityList: React.FC<{
   onIntervalChange?: (_interval: IntervalType) => void;
   hideControls?: boolean;
   useContainerHeight?: boolean;
+  useContentHeight?: boolean;
 }> = ({
   interval: controlledInterval,
   onIntervalChange,
   hideControls,
   useContainerHeight,
+  useContentHeight,
 }) => {
   const [interval, setInterval] = useState<IntervalType>(
     controlledInterval || 'month'
@@ -634,8 +636,20 @@ const ActivityList: React.FC<{
     };
   }, [interval, sportType]);
 
+  const calcGroup: RowGroup[] = useMemo(() => {
+    if (itemsPerRow < 1) return [];
+    const groupLength = Math.ceil(dataList.length / itemsPerRow);
+    const arr: RowGroup[] = [];
+    for (let i = 0; i < groupLength; i++) {
+      const start = i * itemsPerRow;
+      arr.push(dataList.slice(start, start + itemsPerRow));
+    }
+    return arr;
+  }, [dataList, itemsPerRow]);
+
   // compute list height = viewport height - filter container height
   useEffect(() => {
+    if (useContentHeight) return;
     if (useContainerHeight) {
       const containerEl = containerRef.current;
       if (!containerEl) return;
@@ -697,6 +711,13 @@ const ActivityList: React.FC<{
     };
   }, [useContainerHeight]);
 
+  useEffect(() => {
+    if (!useContentHeight) return;
+    const rows = calcGroup.length || 1;
+    const height = rows * rowHeight + 24;
+    setListHeight(height);
+  }, [useContentHeight, calcGroup.length, rowHeight]);
+
   // measure representative card height using a hidden sample and ResizeObserver
   useEffect(() => {
     const el = sampleRef.current;
@@ -711,17 +732,6 @@ const ActivityList: React.FC<{
     ro.observe(el);
     return () => ro.disconnect();
   }, [dataList, rowHeight]);
-
-  const calcGroup: RowGroup[] = useMemo(() => {
-    if (itemsPerRow < 1) return [];
-    const groupLength = Math.ceil(dataList.length / itemsPerRow);
-    const arr: RowGroup[] = [];
-    for (let i = 0; i < groupLength; i++) {
-      const start = i * itemsPerRow;
-      arr.push(dataList.slice(start, start + itemsPerRow));
-    }
-    return arr;
-  }, [dataList, itemsPerRow]);
 
   // compute a row width so we can center the VirtualList and keep cards left-aligned inside
   const rowWidth =
