@@ -591,7 +591,7 @@ const ActivityList: React.FC<{
     const containerWidth = container.clientWidth;
     // Calculate how many items can fit in one row (considering gaps)
     const count = Math.floor((containerWidth + gap) / (itemWidth + gap));
-    setItemsPerRow(count);
+    setItemsPerRow(Math.max(1, Math.min(5, count)));
   }, [gap, itemWidth]);
 
   useEffect(() => {
