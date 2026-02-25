@@ -198,6 +198,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  margin-top: 12px;
 }
 
 .pill {
@@ -310,6 +311,7 @@
 .filter-pill-active {
   background: var(--color-card-surface);
   box-shadow: var(--shadow-soft);
+  border-color: var(--color-text-primary);
 }
 
 .filter-link {

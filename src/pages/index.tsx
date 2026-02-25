@@ -10,7 +10,9 @@ import {
   Activity,
   IViewState,
   DIST_UNIT,
+  ELEV_UNIT,
   M_TO_DIST,
+  M_TO_ELEV,
   convertMovingTime2Sec,
   formatPace,
   formatRunTime,
@@ -388,68 +390,37 @@ const Index = () => {
     return list.slice(0, 6);
   }, [cities]);
 
-  const stats = useMemo(() => {
-    const totalRuns = runs.length;
-    const totalDistance = runs.reduce((sum, run) => sum + run.distance, 0);
-    const totalSeconds = runs.reduce(
-      (sum, run) => sum + convertMovingTime2Sec(run.moving_time),
-      0
-    );
-    const avgSpeed = totalSeconds > 0 ? totalDistance / totalSeconds : 0;
-    const avgPace = avgSpeed > 0 ? formatPace(avgSpeed) : '—';
-    const totalDistanceLabel = `${(totalDistance / M_TO_DIST).toFixed(2)} ${DIST_UNIT}`;
-    const totalDurationLabel = (() => {
-      if (totalSeconds <= 0) return '0m';
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-    })();
-    const avgHeartRate = (() => {
-      const values = runs
-        .map((run) => run.average_heartrate)
-        .filter((v): v is number => typeof v === 'number');
-      if (!values.length) return null;
-      return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
-    })();
-    const totalElevation = runs.reduce(
-      (sum, run) => sum + (run.elevation_gain ?? 0),
-      0
-    );
-    const longestRun = runs.reduce(
-      (max, run) => Math.max(max, run.distance),
-      0
-    );
-    return {
-      totalRuns,
-      totalDistanceLabel,
-      totalDurationLabel,
-      avgPace,
-      avgHeartRate,
-      totalElevationLabel: `${(totalElevation / M_TO_DIST).toFixed(0)} ${DIST_UNIT}`,
-      longestRunLabel: `${(longestRun / M_TO_DIST).toFixed(2)} ${DIST_UNIT}`,
-    };
-  }, [runs]);
+  const selectedRun = useMemo(() => {
+    if (!runs.length) return null;
+    if (runIndex >= 0 && runIndex < runs.length) return runs[runIndex];
+    return runs[0];
+  }, [runs, runIndex]);
 
-  const heartRateSeries = useMemo(() => {
-    const values = runs
-      .filter((run) => typeof run.average_heartrate === 'number')
-      .slice(0, 20)
-      .map((run) => run.average_heartrate as number)
-      .reverse();
-    if (!values.length) return '';
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const width = 160;
-    const height = 48;
-    return values
-      .map((value, idx) => {
-        const x = (idx / Math.max(values.length - 1, 1)) * width;
-        const y =
-          height - ((value - min) / Math.max(max - min, 1)) * height + 2;
-        return `${x},${y}`;
-      })
-      .join(' ');
-  }, [runs]);
+  const stats = useMemo(() => {
+    if (!selectedRun) {
+      return {
+        distanceLabel: `0.00 ${DIST_UNIT}`,
+        durationLabel: '0m',
+        paceLabel: '—',
+        heartRateLabel: '—',
+        elevationLabel: `0 ${ELEV_UNIT}`,
+      };
+    }
+    const durationSeconds = convertMovingTime2Sec(selectedRun.moving_time);
+    return {
+      distanceLabel: `${(selectedRun.distance / M_TO_DIST).toFixed(2)} ${DIST_UNIT}`,
+      durationLabel: formatRunTime(selectedRun.moving_time),
+      paceLabel:
+        selectedRun.average_speed > 0
+          ? formatPace(selectedRun.average_speed)
+          : '—',
+      heartRateLabel: selectedRun.average_heartrate
+        ? `${Math.round(selectedRun.average_heartrate)} bpm`
+        : '—',
+      elevationLabel: `${((selectedRun.elevation_gain ?? 0) * M_TO_ELEV).toFixed(0)} ${ELEV_UNIT}`,
+      durationSeconds,
+    };
+  }, [selectedRun]);
 
   return (
     <Layout>
@@ -607,53 +578,34 @@ const Index = () => {
             <section className="card stats-card">
               <div className="card-header">
                 <h2 className="card-title">Key Metrics</h2>
-                <p className="card-subtitle">自动汇总当前筛选结果</p>
+                <p className="card-subtitle">
+                  {selectedRun
+                    ? `选中：${selectedRun.start_date_local.slice(0, 10)}`
+                    : '暂无选中记录'}
+                </p>
               </div>
               <div className="card-body">
                 <div className="stats-grid">
                   <div className="stat-item">
-                    <span className="stat-label">Total Distance</span>
-                    <span className="stat-value">{stats.totalDistanceLabel}</span>
+                    <span className="stat-label">Distance</span>
+                    <span className="stat-value">{stats.distanceLabel}</span>
                   </div>
                   <div className="stat-item">
-                    <span className="stat-label">Total Time</span>
-                    <span className="stat-value">{stats.totalDurationLabel}</span>
+                    <span className="stat-label">Time</span>
+                    <span className="stat-value">{stats.durationLabel}</span>
                   </div>
                   <div className="stat-item">
-                    <span className="stat-label">Avg Pace</span>
-                    <span className="stat-value">{stats.avgPace}</span>
+                    <span className="stat-label">Pace</span>
+                    <span className="stat-value">{stats.paceLabel}</span>
                   </div>
                   <div className="stat-item">
-                    <span className="stat-label">Avg HR</span>
-                    <span className="stat-value">
-                      {stats.avgHeartRate ? `${stats.avgHeartRate} bpm` : '—'}
-                    </span>
+                    <span className="stat-label">Heart Rate</span>
+                    <span className="stat-value">{stats.heartRateLabel}</span>
                   </div>
                   <div className="stat-item">
-                    <span className="stat-label">Elevation</span>
-                    <span className="stat-value">
-                      {stats.totalElevationLabel}
-                    </span>
+                    <span className="stat-label">Elevation Gain</span>
+                    <span className="stat-value">{stats.elevationLabel}</span>
                   </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Longest Run</span>
-                    <span className="stat-value">{stats.longestRunLabel}</span>
-                  </div>
-                </div>
-                <div className="sparkline">
-                  <div className="sparkline-title">Heart Rate Trend</div>
-                  {heartRateSeries ? (
-                    <svg viewBox="0 0 160 52" role="img">
-                      <polyline
-                        points={heartRateSeries}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      />
-                    </svg>
-                  ) : (
-                    <div className="sparkline-empty">No heart rate data</div>
-                  )}
                 </div>
               </div>
             </section>
