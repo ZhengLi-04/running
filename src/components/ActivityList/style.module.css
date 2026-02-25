@@ -61,12 +61,13 @@
 .activityCard {
   background-color: var(--color-card-surface);
   border: 1px solid var(--color-card-border);
-  border-radius: 16px;
-  padding: 18px;
-  width: 280px;
+  border-radius: 14px;
+  padding: 14px;
+  width: 200px;
   box-shadow: var(--shadow-soft);
   transition: transform 0.2s;
   position: relative;
+  font-size: 0.82rem;
 }
 
 .activityCard:hover {
@@ -126,13 +127,13 @@
 }
 
 .activityName {
-  font-size: 1.5em;
-  margin-bottom: 10px;
+  font-size: 1.1em;
+  margin-bottom: 8px;
   color: var(--color-primary);
 }
 
 .activityDetails p {
-  margin: 8px 0;
+  margin: 6px 0;
   color: var(--color-run-table-thead);
 }
 
@@ -141,7 +142,7 @@
 }
 
 .chart {
-  height: 280px;
+  height: 140px;
   width: 100%;
   background: linear-gradient(
     135deg,

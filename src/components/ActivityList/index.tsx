@@ -28,8 +28,8 @@ import { DIST_UNIT, M_TO_DIST } from '@/utils/utils';
 import RoutePreview from '@/components/RoutePreview';
 import { Activity } from '@/utils/utils';
 // Layout constants (avoid magic numbers)
-const ITEM_WIDTH = 280;
-const ITEM_GAP = 20;
+const ITEM_WIDTH = 200;
+const ITEM_GAP = 16;
 
 const VIRTUAL_LIST_STYLES = {
   horizontalScrollBar: {},
@@ -166,13 +166,13 @@ const ActivityCardInner: React.FC<ActivityCardProps> = ({
   };
 
   // Calculate Y-axis maximum value and ticks
-  const yAxisMax = Math.ceil(
-    Math.max(...data.map((d) => parseFloat(d.distance))) + 10
-  ); // Round up and add buffer
+  const rawMax = Math.max(...data.map((d) => parseFloat(d.distance)));
+  const yAxisMax = Math.ceil(rawMax * 1.1) || 1;
+  const step = Math.max(1, Math.ceil(yAxisMax / 4));
   const yAxisTicks = Array.from(
-    { length: Math.ceil(yAxisMax / 5) + 1 },
-    (_, i) => i * 5
-  ); // Generate arithmetic sequence
+    { length: Math.ceil(yAxisMax / step) + 1 },
+    (_, i) => i * step
+  );
 
   return (
     <div

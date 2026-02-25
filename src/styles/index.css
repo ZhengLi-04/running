@@ -447,7 +447,7 @@
 }
 
 .summary-routes {
-  grid-column: span 12;
+  grid-column: span 6;
 }
 
 .summary-year-tabs {
