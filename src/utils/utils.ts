@@ -179,6 +179,13 @@ const locationForRun = (
       // try to extract city coord from location_country info
       coordinate = extractCoordinate(location);
     }
+    if (!city) {
+      if (location.includes('香港')) {
+        city = '香港特别行政区';
+      } else if (location.includes('澳门')) {
+        city = '澳门特别行政区';
+      }
+    }
     const l = location.split(',');
     // or to handle keep location format
     let countryMatch = l[l.length - 1].match(
