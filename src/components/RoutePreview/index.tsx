@@ -6,11 +6,15 @@ import styles from './style.module.css';
 interface RoutePreviewProps {
   activities: Activity[];
   className?: string;
+  width?: number;
+  height?: number;
 }
 
 const RoutePreview: React.FC<RoutePreviewProps> = ({
   activities,
   className,
+  width = 250,
+  height = 150,
 }) => {
   // Filter activities that have polyline data
   const activitiesWithRoutes = activities.filter(
@@ -66,8 +70,8 @@ const RoutePreview: React.FC<RoutePreviewProps> = ({
   const boundsHeight = bounds.maxLat - bounds.minLat;
 
   // SVG dimensions
-  const svgWidth = 250;
-  const svgHeight = 150;
+  const svgWidth = width;
+  const svgHeight = height;
   const svgPadding = 10;
   const drawWidth = svgWidth - 2 * svgPadding;
   const drawHeight = svgHeight - 2 * svgPadding;

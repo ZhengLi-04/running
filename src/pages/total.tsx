@@ -2,7 +2,6 @@ import { Helmet } from 'react-helmet-async';
 import { useMemo, useState, lazy, Suspense } from 'react';
 import { useTheme } from '@/hooks/useTheme';
 import Layout from '@/components/Layout';
-import SVGStat from '@/components/SVGStat';
 import ActivityList from '@/components/ActivityList';
 import useSiteMetadata from '@/hooks/useSiteMetadata';
 import useActivities from '@/hooks/useActivities';
@@ -29,6 +28,17 @@ const SummaryPage = () => {
       .slice()
       .sort((a, b) => b.distance - a.distance)
       .slice(0, 5);
+  }, [activities]);
+
+  const latestRuns = useMemo(() => {
+    return activities
+      .slice()
+      .sort(
+        (a, b) =>
+          new Date(b.start_date_local).getTime() -
+          new Date(a.start_date_local).getTime()
+      )
+      .slice(0, 30);
   }, [activities]);
 
   const YearSvg = useMemo(() => {
@@ -60,16 +70,6 @@ const SummaryPage = () => {
               <span className="pill">{activities.length} Activities</span>
               <span className="pill">Total Distance: {totalDistance}</span>
             </div>
-          </div>
-        </section>
-
-        <section className="card summary-heatmap">
-          <div className="card-header">
-            <h2 className="card-title">Heatmap & Grid</h2>
-            <p className="card-subtitle">年度热力图与 Over 3km 路线网格</p>
-          </div>
-          <div className="card-body">
-            <SVGStat />
           </div>
         </section>
 
@@ -124,10 +124,9 @@ const SummaryPage = () => {
           <section className="card summary-routes">
             <div className="card-header">
               <h2 className="card-title">Routes</h2>
-              <p className="card-subtitle">最长的几次线路预览</p>
+              <p className="card-subtitle">最长的几次跑步记录</p>
             </div>
             <div className="card-body">
-              <RoutePreview activities={topRuns as Activity[]} />
               <div className="summary-list">
                 {topRuns.map((run) => (
                   <div key={run.run_id} className="summary-list-item">
@@ -151,6 +150,22 @@ const SummaryPage = () => {
           </div>
           <div className="card-body">
             <ActivityList />
+          </div>
+        </section>
+
+        <section className="card summary-route-grid">
+          <div className="card-header">
+            <h2 className="card-title">Route Grid</h2>
+            <p className="card-subtitle">最新记录优先，10 列排布</p>
+          </div>
+          <div className="card-body">
+            <div className="route-grid">
+              {latestRuns.map((run) => (
+                <div key={run.run_id} className="route-grid-item">
+                  <RoutePreview activities={[run] as Activity[]} width={120} height={70} />
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       </div>

@@ -51,11 +51,12 @@ class YearSummaryDrawer(TracksDrawer):
         left_width = size.x * 0.40
         right_section_start = offset.x + left_width
 
-        # Draw "Running for X Days" header - align with top of dots (offset.y + 8)
+        # Draw "Running for X Weeks" header - align with top of dots (offset.y + 8)
         first_run_date = self._get_first_run_date()
         if first_run_date:
             days_ago = (datetime.datetime.now() - first_run_date).days
-            header_text = f"Running for {days_ago} Days"
+            weeks_ago = max(1, days_ago // 7)
+            header_text = f"Running for {weeks_ago} Weeks"
         else:
             header_text = f"Year {self.year}"
 
@@ -68,10 +69,10 @@ class YearSummaryDrawer(TracksDrawer):
             )
         )
 
-        # Draw race categories
+        # Draw distance categories
         dr.add(
             dr.text(
-                "Races",
+                "Distances",
                 insert=(left_margin, offset.y + 34),
                 fill=dim_color,
                 style="font-size:6px; font-family:Arial;",

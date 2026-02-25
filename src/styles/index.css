@@ -474,6 +474,36 @@
 
 .summary-reports .card-body {
   padding-top: 0;
+  min-height: 520px;
+}
+
+.summary-route-grid .card-body {
+  padding-top: 8px;
+}
+
+.route-grid {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.route-grid-item {
+  border: 1px solid var(--color-card-border);
+  border-radius: 10px;
+  padding: 4px;
+  background: var(--color-card-surface);
+}
+
+@media only screen and (max-width: 1024px) {
+  .route-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media only screen and (max-width: 640px) {
+  .route-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media only screen and (max-width: 1024px) {
