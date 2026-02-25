@@ -135,6 +135,11 @@
     font-family: var(--font-sans);
     margin: 0;
   }
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 }
 
 .page-shell {
@@ -472,6 +477,12 @@
   .map-card,
   .stats-card,
   .filter-bar {
+    width: 100%;
+  }
+
+  .card,
+  .card-body,
+  #map-container {
     width: 100%;
   }
 
