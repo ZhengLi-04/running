@@ -412,6 +412,82 @@
   gap: 16px;
 }
 
+.summary-page {
+  gap: 24px;
+}
+
+.summary-hero .hero-meta {
+  margin-top: 12px;
+}
+
+.summary-heatmap #svgStat {
+  padding-top: 8px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.summary-year {
+  grid-column: span 7;
+}
+
+.summary-location {
+  grid-column: span 5;
+}
+
+.summary-routes {
+  grid-column: span 12;
+}
+
+.summary-year-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.summary-year-svg {
+  border-radius: 16px;
+  border: 1px solid var(--color-card-border);
+  padding: 12px;
+  background: var(--color-card-surface);
+}
+
+.summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.summary-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--color-card-border);
+}
+
+.summary-reports .card-body {
+  padding-top: 0;
+}
+
+@media only screen and (max-width: 1024px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-year,
+  .summary-location,
+  .summary-routes {
+    grid-column: span 1;
+  }
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
