@@ -6,12 +6,13 @@ import ActivityList from '@/components/ActivityList';
 import useSiteMetadata from '@/hooks/useSiteMetadata';
 import useActivities from '@/hooks/useActivities';
 import RoutePreview from '@/components/RoutePreview';
-import { yearSummaryStats } from '@assets/index';
+import { githubYearStats } from '@assets/index';
 import { loadSvgComponent } from '@/utils/svgUtils';
 import {
   DIST_UNIT,
   M_TO_DIST,
   convertMovingTime2Sec,
+  formatPace,
   locationForRun,
 } from '@/utils/utils';
 import { Activity } from '@/utils/utils';
@@ -22,7 +23,7 @@ const SummaryPage = () => {
   const { activities, years, cities } = useActivities();
   const [selectedYear, setSelectedYear] = useState(years[0] || '');
   const [reportInterval, setReportInterval] = useState<
-    'year' | 'month' | 'week' | 'day' | 'life'
+    'year' | 'month' | 'week' | 'day'
   >('month');
   const [topRunsCount, setTopRunsCount] = useState(5);
 
@@ -60,9 +61,57 @@ const SummaryPage = () => {
   const YearSvg = useMemo(() => {
     if (!selectedYear) return null;
     return lazy(() =>
-      loadSvgComponent(yearSummaryStats, `./year_summary_${selectedYear}.svg`)
+      loadSvgComponent(githubYearStats, `./github_${selectedYear}.svg`)
     );
   }, [selectedYear]);
+
+  const yearRuns = useMemo(() => {
+    if (!selectedYear) return activities;
+    return activities.filter(
+      (run) => run.start_date_local.slice(0, 4) === selectedYear
+    );
+  }, [activities, selectedYear]);
+
+  const yearStats = useMemo(() => {
+    const totalDistance = yearRuns.reduce((acc, run) => acc + run.distance, 0);
+    const totalSeconds = yearRuns.reduce(
+      (acc, run) => acc + convertMovingTime2Sec(run.moving_time),
+      0
+    );
+    const avgSpeed = totalSeconds > 0 ? totalDistance / totalSeconds : 0;
+    const longest = yearRuns.reduce(
+      (max, run) => Math.max(max, run.distance),
+      0
+    );
+    const dates = Array.from(
+      new Set(yearRuns.map((run) => run.start_date_local.slice(0, 10)))
+    )
+      .map((d) => new Date(d).getTime())
+      .sort((a, b) => a - b);
+    let streak = 0;
+    let current = 0;
+    for (let i = 0; i < dates.length; i++) {
+      if (i === 0 || dates[i] - dates[i - 1] === 86400000) {
+        current += 1;
+      } else {
+        current = 1;
+      }
+      streak = Math.max(streak, current);
+    }
+    return {
+      runs: yearRuns.length,
+      distance: `${(totalDistance / M_TO_DIST).toFixed(1)} ${DIST_UNIT}`,
+      time:
+        totalSeconds > 0
+          ? `${Math.floor(totalSeconds / 3600)}h ${Math.floor(
+              (totalSeconds % 3600) / 60
+            )}m`
+          : '0m',
+      pace: avgSpeed > 0 ? formatPace(avgSpeed) : '—',
+      longest: `${(longest / M_TO_DIST).toFixed(1)} ${DIST_UNIT}`,
+      streak,
+    };
+  }, [yearRuns]);
 
   const totalDistance = useMemo(() => {
     const sum = activities.reduce((acc, run) => acc + run.distance, 0);
@@ -137,6 +186,14 @@ const SummaryPage = () => {
                   </Suspense>
                 </div>
               )}
+              <div className="summary-year-stats">
+                <span className="pill">Runs: {yearStats.runs}</span>
+                <span className="pill">Distance: {yearStats.distance}</span>
+                <span className="pill">Time: {yearStats.time}</span>
+                <span className="pill">Avg Pace: {yearStats.pace}</span>
+                <span className="pill">Longest: {yearStats.longest}</span>
+                <span className="pill">Streak: {yearStats.streak} days</span>
+              </div>
             </div>
           </section>
 
@@ -229,6 +286,7 @@ const SummaryPage = () => {
               interval={reportInterval}
               onIntervalChange={setReportInterval}
               hideControls
+              useContainerHeight
             />
           </div>
         </section>
@@ -236,7 +294,13 @@ const SummaryPage = () => {
         <section className="card summary-route-grid">
           <div className="card-header">
             <h2 className="card-title">Route Grid</h2>
-            <p className="card-subtitle">最新记录优先，8 列排布</p>
+            <div className="card-header-row">
+              <p className="card-subtitle">最新记录优先，8 列排布</p>
+              <div className="route-grid-legend">
+                <span className="legend-item legend-5">≥5km</span>
+                <span className="legend-item legend-10">≥10km</span>
+              </div>
+            </div>
           </div>
           <div className="card-body">
             <div className="route-grid">

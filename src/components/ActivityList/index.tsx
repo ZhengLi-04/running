@@ -331,7 +331,13 @@ const ActivityList: React.FC<{
   interval?: IntervalType;
   onIntervalChange?: (_interval: IntervalType) => void;
   hideControls?: boolean;
-}> = ({ interval: controlledInterval, onIntervalChange, hideControls }) => {
+  useContainerHeight?: boolean;
+}> = ({
+  interval: controlledInterval,
+  onIntervalChange,
+  hideControls,
+  useContainerHeight,
+}) => {
   const [interval, setInterval] = useState<IntervalType>(
     controlledInterval || 'month'
   );
@@ -630,6 +636,19 @@ const ActivityList: React.FC<{
 
   // compute list height = viewport height - filter container height
   useEffect(() => {
+    if (useContainerHeight) {
+      const containerEl = containerRef.current;
+      if (!containerEl) return;
+      const update = () => {
+        const h = containerEl.clientHeight;
+        if (h > 0) setListHeight(h);
+      };
+      update();
+      const ro = new ResizeObserver(update);
+      ro.observe(containerEl);
+      return () => ro.disconnect();
+    }
+
     const updateListHeight = () => {
       const filterH = filterRef.current?.clientHeight || 0;
       const containerEl = containerRef.current;
@@ -676,7 +695,7 @@ const ActivityList: React.FC<{
       window.removeEventListener('resize', updateListHeight);
       ro.disconnect();
     };
-  }, []);
+  }, [useContainerHeight]);
 
   // measure representative card height using a hidden sample and ResizeObserver
   useEffect(() => {
