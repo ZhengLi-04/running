@@ -164,6 +164,18 @@
   padding: 12px 20px 0;
 }
 
+.page-footer {
+  padding: 18px 24px 28px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.page-footer a {
+  color: inherit;
+  text-decoration: underline;
+}
+
 .dashboard {
   display: flex;
   flex-direction: column;
