@@ -367,7 +367,6 @@ const Index = () => {
     const list = years.slice();
     list.unshift(thisYear);
     const unique = Array.from(new Set(list));
-    if (!unique.includes('Total')) unique.push('Total');
     return ['All', ...unique];
   }, [years, thisYear]);
 
