@@ -348,6 +348,14 @@
   transition: background 0.2s ease, border 0.2s ease;
 }
 
+.run-item-location {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-muted);
+  margin-bottom: 6px;
+}
+
 .run-item:hover {
   background: var(--color-card-surface);
 }

@@ -14,6 +14,7 @@ import {
   convertMovingTime2Sec,
   formatPace,
   formatRunTime,
+  locationForRun,
   filterAndSortRuns,
   filterCityRuns,
   filterYearRuns,
@@ -395,7 +396,7 @@ const Index = () => {
       0
     );
     const avgSpeed = totalSeconds > 0 ? totalDistance / totalSeconds : 0;
-    const avgPace = formatPace(avgSpeed);
+    const avgPace = avgSpeed > 0 ? formatPace(avgSpeed) : '—';
     const totalDistanceLabel = `${(totalDistance / M_TO_DIST).toFixed(2)} ${DIST_UNIT}`;
     const totalDurationLabel = (() => {
       if (totalSeconds <= 0) return '0m';
@@ -551,12 +552,24 @@ const Index = () => {
                     }`}
                     onClick={() => locateActivity([run.run_id])}
                   >
-                    <div className="run-item-header">
-                      <span className="run-item-title">{run.name || 'Run'}</span>
-                      <span className="run-item-date">
-                        {run.start_date_local.slice(0, 10)}
-                      </span>
-                    </div>
+                    {(() => {
+                      const { city, province, country } = locationForRun(run);
+                      const location =
+                        city || province || country || 'Unknown';
+                      return (
+                        <>
+                          <div className="run-item-location">{location}</div>
+                          <div className="run-item-header">
+                            <span className="run-item-title">
+                              {run.name || 'Run'}
+                            </span>
+                            <span className="run-item-date">
+                              {run.start_date_local.slice(0, 10)}
+                            </span>
+                          </div>
+                        </>
+                      );
+                    })()}
                     <div className="run-item-meta">
                       <span>
                         {(run.distance / M_TO_DIST).toFixed(2)} {DIST_UNIT}

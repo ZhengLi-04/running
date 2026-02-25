@@ -422,7 +422,12 @@ const filterYearRuns = (run: Activity, year: string) => {
 };
 
 const filterCityRuns = (run: Activity, city: string) => {
-  if (run && run.location_country) {
+  if (!run) return false;
+  const { city: runCity, province, country } = locationForRun(run);
+  if (runCity && runCity === city) return true;
+  if (province && province === city) return true;
+  if (country && country === city) return true;
+  if (run.location_country) {
     return run.location_country.includes(city);
   }
   return false;
