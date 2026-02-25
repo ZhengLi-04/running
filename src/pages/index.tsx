@@ -505,9 +505,11 @@ const Index = () => {
         <div className="dashboard-grid dashboard-grid--main">
           <section className="card run-list-card">
             <div className="card-header">
-              <h2 className="card-title">Run List</h2>
-              <div className="run-list-meta">
-                <span className="pill">{runs.length} Runs</span>
+              <div className="card-header-row">
+                <h2 className="card-title">Run List</h2>
+                <div className="run-list-meta">
+                  <span className="pill">{runs.length} Runs</span>
+                </div>
               </div>
               <p className="card-subtitle">当前筛选结果</p>
             </div>
