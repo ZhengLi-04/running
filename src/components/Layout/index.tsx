@@ -32,7 +32,7 @@ const Layout = ({ children }: React.PropsWithChildren) => {
             >
               yihong0618/running_page
             </a>
-            ，并在此基础上使用 Codex 定制实现。谢谢！
+            ，并在此基础上使用 Codex 定制实现。
           </span>
         </footer>
       </div>
