@@ -25,7 +25,7 @@ const SummaryPage = () => {
   const [selectedYear, setSelectedYear] = useState(years[0] || '');
   const [reportInterval, setReportInterval] = useState<
     'year' | 'month' | 'week' | 'day'
-  >('month');
+  >('week');
   const [topRunsCount, setTopRunsCount] = useState(5);
 
   const topLocations = useMemo(() => {

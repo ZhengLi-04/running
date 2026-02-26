@@ -715,7 +715,9 @@ const ActivityList: React.FC<{
     if (!useContentHeight) return;
     const rows = calcGroup.length || 1;
     const height = rows * rowHeight + 24;
-    setListHeight(height);
+    const maxHeight = rowHeight * 4 + 24;
+    const cappedHeight = Math.min(height, maxHeight);
+    setListHeight(cappedHeight);
   }, [useContentHeight, calcGroup.length, rowHeight]);
 
   // measure representative card height using a hidden sample and ResizeObserver
