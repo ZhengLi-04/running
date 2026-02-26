@@ -1,5 +1,15 @@
 import { Helmet } from 'react-helmet-async';
 import { useMemo, useState, lazy, Suspense } from 'react';
+import {
+  AreaChart,
+  Area,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from 'recharts';
 import { useTheme } from '@/hooks/useTheme';
 import Layout from '@/components/Layout';
 import ActivityList from '@/components/ActivityList';
@@ -115,6 +125,51 @@ const SummaryPage = () => {
     };
   }, [yearRuns]);
 
+  const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  const yearCumulative = useMemo(() => {
+    const monthDistance = new Array(12).fill(0);
+    const monthTime = new Array(12).fill(0);
+    yearRuns.forEach((run) => {
+      const m = new Date(run.start_date_local).getMonth();
+      monthDistance[m] += run.distance;
+      monthTime[m] += convertMovingTime2Sec(run.moving_time);
+    });
+
+    const cumulativeDistance = monthDistance.reduce<number[]>((acc, v) => {
+      acc.push((acc.at(-1) || 0) + v);
+      return acc;
+    }, []);
+
+    const cumulativeTime = monthTime.reduce<number[]>((acc, v) => {
+      acc.push((acc.at(-1) || 0) + v);
+      return acc;
+    }, []);
+
+    let lastActiveMonth = -1;
+    for (let i = 0; i < 12; i++) {
+      if (monthDistance[i] > 0 || monthTime[i] > 0) lastActiveMonth = i;
+    }
+    if (lastActiveMonth < 0) lastActiveMonth = 0;
+
+    const data = monthLabels.map((label, idx) => {
+      const distanceKm = cumulativeDistance[idx] / M_TO_DIST;
+      const timeHours = cumulativeTime[idx] / 3600;
+      return {
+        label,
+        idx,
+        distance: distanceKm,
+        time: timeHours,
+        actualDistance: idx <= lastActiveMonth ? distanceKm : null,
+        actualTime: idx <= lastActiveMonth ? timeHours : null,
+        futureDistance: idx >= lastActiveMonth ? distanceKm : null,
+        futureTime: idx >= lastActiveMonth ? timeHours : null,
+      };
+    });
+
+    return { data, lastActiveMonth };
+  }, [yearRuns]);
+
   const totalDistance = useMemo(() => {
     const sum = activities.reduce((acc, run) => acc + run.distance, 0);
     return `${(sum / M_TO_DIST).toFixed(1)} ${DIST_UNIT}`;
@@ -187,13 +242,107 @@ const SummaryPage = () => {
                   </button>
                 ))}
               </div>
-              {YearSvg && (
-                <div className="summary-year-svg">
-                  <Suspense fallback={<div>Loading...</div>}>
-                    <YearSvg className="year-svg w-full" />
-                  </Suspense>
+              <div className="summary-year-content">
+                {YearSvg && (
+                  <div className="summary-year-svg">
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <YearSvg className="year-svg w-full" />
+                    </Suspense>
+                  </div>
+                )}
+                <div className="summary-year-trends">
+                  <div className="summary-year-trend">
+                    <h3>Cumulative Distance</h3>
+                    <ResponsiveContainer>
+                      <AreaChart data={yearCumulative.data}>
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="var(--color-run-row-hover-background)"
+                        />
+                        <XAxis
+                          dataKey="label"
+                          tick={{ fill: 'var(--color-run-table-thead)' }}
+                        />
+                        <YAxis
+                          tick={{ fill: 'var(--color-run-table-thead)' }}
+                          width={32}
+                        />
+                        <Tooltip
+                          formatter={(value: number) =>
+                            `${value.toFixed(1)} ${DIST_UNIT}`
+                          }
+                          contentStyle={{
+                            backgroundColor:
+                              'var(--color-run-row-hover-background)',
+                            border:
+                              '1px solid var(--color-run-row-hover-background)',
+                            color: 'var(--color-run-table-thead)',
+                          }}
+                          labelStyle={{ color: 'var(--color-primary)' }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="actualDistance"
+                          stroke="var(--color-primary)"
+                          fill="rgba(14, 116, 144, 0.2)"
+                          strokeWidth={2}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="futureDistance"
+                          stroke="var(--color-primary)"
+                          strokeDasharray="6 6"
+                          dot={false}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="summary-year-trend">
+                    <h3>Cumulative Time</h3>
+                    <ResponsiveContainer>
+                      <AreaChart data={yearCumulative.data}>
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="var(--color-run-row-hover-background)"
+                        />
+                        <XAxis
+                          dataKey="label"
+                          tick={{ fill: 'var(--color-run-table-thead)' }}
+                        />
+                        <YAxis
+                          tick={{ fill: 'var(--color-run-table-thead)' }}
+                          width={32}
+                        />
+                        <Tooltip
+                          formatter={(value: number) => `${value.toFixed(1)} h`}
+                          contentStyle={{
+                            backgroundColor:
+                              'var(--color-run-row-hover-background)',
+                            border:
+                              '1px solid var(--color-run-row-hover-background)',
+                            color: 'var(--color-run-table-thead)',
+                          }}
+                          labelStyle={{ color: 'var(--color-primary)' }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="actualTime"
+                          stroke="var(--color-accent, #f59e0b)"
+                          fill="rgba(245, 158, 11, 0.2)"
+                          strokeWidth={2}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="futureTime"
+                          stroke="var(--color-accent, #f59e0b)"
+                          strokeDasharray="6 6"
+                          dot={false}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-              )}
+              </div>
               <div className="summary-year-stats">
                 <span className="pill">Runs: {yearStats.runs}</span>
                 <span className="pill">Distance: {yearStats.distance}</span>
