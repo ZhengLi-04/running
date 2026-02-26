@@ -42,9 +42,7 @@ const SummaryPage = () => {
     const map = new Map<string, number>();
     activities.forEach((run) => {
       const location =
-        locationDetailForRun(run) ||
-        run.location_country ||
-        'Unknown';
+        locationDetailForRun(run) || run.location_country || 'Unknown';
       map.set(location, (map.get(location) || 0) + run.distance);
     });
     const list = Array.from(map.entries());
@@ -125,7 +123,20 @@ const SummaryPage = () => {
     };
   }, [yearRuns]);
 
-  const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthLabels = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
 
   const yearCumulative = useMemo(() => {
     const monthDistance = new Array(12).fill(0);
@@ -189,11 +200,7 @@ const SummaryPage = () => {
     return new Set(
       activities
         .map((run) => {
-          return (
-            locationDetailForRun(run) ||
-            run.location_country ||
-            ''
-          );
+          return locationDetailForRun(run) || run.location_country || '';
         })
         .filter((x) => x.length > 0)
     ).size;
@@ -420,21 +427,17 @@ const SummaryPage = () => {
                 </p>
               </div>
               <div className="summary-tabs">
-                {(['year', 'month', 'week', 'day'] as const).map(
-                  (interval) => (
-                    <button
-                      key={interval}
-                      className={`filter-pill ${
-                        reportInterval === interval
-                          ? 'filter-pill-active'
-                          : ''
-                      }`}
-                      onClick={() => setReportInterval(interval)}
-                    >
-                      {interval}
-                    </button>
-                  )
-                )}
+                {(['year', 'month', 'week', 'day'] as const).map((interval) => (
+                  <button
+                    key={interval}
+                    className={`filter-pill ${
+                      reportInterval === interval ? 'filter-pill-active' : ''
+                    }`}
+                    onClick={() => setReportInterval(interval)}
+                  >
+                    {interval}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -472,7 +475,11 @@ const SummaryPage = () => {
                         : ''
                   }`}
                 >
-                  <RoutePreview activities={[run] as Activity[]} width={150} height={90} />
+                  <RoutePreview
+                    activities={[run] as Activity[]}
+                    width={150}
+                    height={90}
+                  />
                   <div className="route-grid-meta">
                     <span>{run.start_date_local.slice(5, 10)}</span>
                     <span>

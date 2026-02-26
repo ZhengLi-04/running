@@ -90,9 +90,7 @@ const Index = () => {
     return activities
       .filter((run) => {
         const matchYear =
-          selectedYear === 'Total'
-            ? true
-            : filterYearRuns(run, selectedYear);
+          selectedYear === 'Total' ? true : filterYearRuns(run, selectedYear);
         const matchMonth =
           selectedMonth === 'Total'
             ? true
@@ -536,8 +534,7 @@ const Index = () => {
                   >
                     {(() => {
                       const { city, province, country } = locationForRun(run);
-                      const location =
-                        city || province || country || 'Unknown';
+                      const location = city || province || country || 'Unknown';
                       return (
                         <>
                           <div className="run-item-location">{location}</div>
@@ -568,9 +565,7 @@ const Index = () => {
           <div className="dashboard-main">
             <section className="card map-card" id="map-container">
               <div className="card-header">
-                <h2 className="card-title">
-                  {title || `${year} Running Map`}
-                </h2>
+                <h2 className="card-title">{title || `${year} Running Map`}</h2>
                 <p className="card-subtitle">
                   {selectedRun
                     ? locationDetailForRun(selectedRun) || '地图与路线概览'

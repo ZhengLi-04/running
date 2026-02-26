@@ -141,8 +141,7 @@ const extractDistricts = (str: string): string[] => {
 const extractSubAreas = (str: string): string[] => {
   const locations = [];
   let match;
-  const pattern =
-    /([\u4e00-\u9fa5]{2,}(区|區|县|縣|市|镇|鎮|乡|鄉|街道|街))/g;
+  const pattern = /([\u4e00-\u9fa5]{2,}(区|區|县|縣|市|镇|鎮|乡|鄉|街道|街))/g;
   while ((match = pattern.exec(str)) !== null) {
     locations.push(match[0]);
   }
