@@ -33,7 +33,6 @@ class YearSummaryDrawer(TracksDrawer):
     def draw(self, dr: svgwrite.Drawing, size: XY, offset: XY):
         """Draw the year summary poster"""
         # Colors - use running_page default colors
-        text_color = self.poster.colors.get("text", "#FFFFFF")
         track_color = self.poster.colors.get("track", "#4DD2FF")
         special_color = self.poster.colors.get("special", "#FFFF00")
         dim_color = "#555555"
@@ -44,8 +43,6 @@ class YearSummaryDrawer(TracksDrawer):
         ]
 
         # Calculate statistics
-        stats = self._calculate_stats(year_tracks)
-
         # Full-width layout: only draw the monthly grid
         right_section_start = offset.x + 6
 
