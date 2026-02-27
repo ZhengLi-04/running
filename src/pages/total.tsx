@@ -481,7 +481,7 @@ const SummaryPage = () => {
                     height={90}
                   />
                   <div className="route-grid-meta">
-                    <span>{run.start_date_local.slice(5, 10)}</span>
+                    <span>{run.start_date_local.slice(0, 10)}</span>
                     <span>
                       {(run.distance / M_TO_DIST).toFixed(1)} {DIST_UNIT}
                     </span>

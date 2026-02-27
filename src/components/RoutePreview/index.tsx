@@ -75,11 +75,17 @@ const RoutePreview: React.FC<RoutePreviewProps> = ({
   const svgPadding = 10;
   const drawWidth = svgWidth - 2 * svgPadding;
   const drawHeight = svgHeight - 2 * svgPadding;
+  const scale = Math.min(
+    drawWidth / Math.max(boundsWidth, 1e-9),
+    drawHeight / Math.max(boundsHeight, 1e-9)
+  );
+  const offsetX = svgPadding + (drawWidth - boundsWidth * scale) / 2;
+  const offsetY = svgPadding + (drawHeight - boundsHeight * scale) / 2;
 
   // Convert coordinate to SVG coordinate
   const coordToSvg = (lng: number, lat: number): [number, number] => {
-    const x = svgPadding + ((lng - bounds.minLng) / boundsWidth) * drawWidth;
-    const y = svgPadding + ((bounds.maxLat - lat) / boundsHeight) * drawHeight;
+    const x = offsetX + (lng - bounds.minLng) * scale;
+    const y = offsetY + (bounds.maxLat - lat) * scale;
     return [x, y];
   };
 
