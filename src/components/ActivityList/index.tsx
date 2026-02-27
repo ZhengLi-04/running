@@ -28,7 +28,7 @@ import { DIST_UNIT, M_TO_DIST } from '@/utils/utils';
 import RoutePreview from '@/components/RoutePreview';
 import { Activity } from '@/utils/utils';
 // Layout constants (avoid magic numbers)
-const ITEM_WIDTH = 200;
+const ITEM_WIDTH = 215;
 const ITEM_GAP = 16;
 
 const VIRTUAL_LIST_STYLES = {
