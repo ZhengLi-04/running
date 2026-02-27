@@ -47,6 +47,7 @@ const Index = () => {
 
   // State to track if we're showing a single run from URL hash
   const [singleRunId, setSingleRunId] = useState<number | null>(null);
+  const singleRunFromHashRef = useRef(false);
 
   // Animation trigger for single runs - increment this to force animation replay
   const [animationTrigger, setAnimationTrigger] = useState(0);
@@ -60,6 +61,7 @@ const Index = () => {
     if (hash && hash.startsWith('run_')) {
       const runId = parseInt(hash.replace('run_', ''), 10);
       if (!isNaN(runId)) {
+        singleRunFromHashRef.current = true;
         setSingleRunId(runId);
       }
     }
@@ -70,11 +72,13 @@ const Index = () => {
       if (newHash && newHash.startsWith('run_')) {
         const runId = parseInt(newHash.replace('run_', ''), 10);
         if (!isNaN(runId)) {
+          singleRunFromHashRef.current = true;
           setSingleRunId(runId);
         }
       } else {
         // Hash was cleared, reset to normal view
         setSingleRunId(null);
+        singleRunFromHashRef.current = false;
       }
     };
 
@@ -245,6 +249,7 @@ const Index = () => {
         if (window.location.hash !== newHash) {
           window.history.pushState(null, '', newHash);
         }
+        singleRunFromHashRef.current = false;
         setSingleRunId(runId);
       } else {
         // If multiple runs or no runs, clear the hash and single run state
@@ -252,6 +257,7 @@ const Index = () => {
           window.history.pushState(null, '', window.location.pathname);
         }
         setSingleRunId(null);
+        singleRunFromHashRef.current = false;
       }
 
       // Create geoData for selected runs and calculate new bounds
@@ -285,17 +291,20 @@ const Index = () => {
     if (singleRunId !== null && activities.length > 0) {
       const targetRun = activities.find((run) => run.run_id === singleRunId);
       if (targetRun) {
-        const runYear = targetRun.start_date_local.slice(0, 4);
-        if (year !== runYear) {
-          setYear(runYear);
-          setSelectedYear(runYear);
-          setSelectedMonth('Total');
+        if (singleRunFromHashRef.current) {
+          const runYear = targetRun.start_date_local.slice(0, 4);
+          if (year !== runYear) {
+            setYear(runYear);
+            setSelectedYear(runYear);
+            setSelectedMonth('Total');
+          }
         }
       } else {
         // If run doesn't exist, clear the hash and show a warning
         console.warn(`Run with ID ${singleRunId} not found in activities`);
         window.history.replaceState(null, '', window.location.pathname);
         setSingleRunId(null);
+        singleRunFromHashRef.current = false;
       }
     }
   }, [singleRunId, activities, year]);
