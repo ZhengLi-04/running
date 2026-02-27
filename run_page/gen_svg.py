@@ -282,7 +282,10 @@ def main():
     if is_year_summary:
         p.drawer_type = "year_summary"
     if args.type == "github":
-        p.height = 55 + p.years.real_year * 43
+        if args.year and args.year != "all":
+            p.height = 55 + 43
+        else:
+            p.height = 55 + p.years.real_year * 43
     p.github_style = args.github_style
 
     if args.type == "circular":
@@ -321,7 +324,7 @@ def main():
         for y in years:
             p.years.from_year, p.years.to_year = y, y
             # Recalculate height for single year heat map
-            p.height = 55 + p.years.real_year * 43
+            p.height = 55 + 43
             # Re-set tracks for this year's data
             p.set_tracks(tracks)
             # Use year-specific title if available, otherwise use default
