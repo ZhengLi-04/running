@@ -449,6 +449,7 @@ const SummaryPage = () => {
               onIntervalChange={setReportInterval}
               hideControls
               useContentHeight
+              forceItemsPerRow={5}
             />
           </div>
         </section>

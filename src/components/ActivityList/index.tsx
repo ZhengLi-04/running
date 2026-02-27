@@ -333,12 +333,14 @@ const ActivityList: React.FC<{
   hideControls?: boolean;
   useContainerHeight?: boolean;
   useContentHeight?: boolean;
+  forceItemsPerRow?: number;
 }> = ({
   interval: controlledInterval,
   onIntervalChange,
   hideControls,
   useContainerHeight,
   useContentHeight,
+  forceItemsPerRow,
 }) => {
   const [interval, setInterval] = useState<IntervalType>(
     controlledInterval || 'month'
@@ -588,6 +590,10 @@ const ActivityList: React.FC<{
   const virtualListRef = useRef<HTMLDivElement | null>(null);
 
   const calculateItemsPerRow = useCallback(() => {
+    if (forceItemsPerRow && forceItemsPerRow > 0) {
+      setItemsPerRow(forceItemsPerRow);
+      return;
+    }
     const container = containerRef.current;
     if (!container) return;
     const containerWidth = container.clientWidth;
@@ -603,11 +609,14 @@ const ActivityList: React.FC<{
     calculateItemsPerRow();
 
     // Use ResizeObserver to monitor container size changes
-    const resizeObserver = new ResizeObserver(calculateItemsPerRow);
-    resizeObserver.observe(container);
+    if (!forceItemsPerRow) {
+      const resizeObserver = new ResizeObserver(calculateItemsPerRow);
+      resizeObserver.observe(container);
+      return () => resizeObserver.disconnect();
+    }
 
-    return () => resizeObserver.disconnect();
-  }, [calculateItemsPerRow]);
+    return;
+  }, [calculateItemsPerRow, forceItemsPerRow]);
 
   // when the interval changes, scroll the virtual list to top to improve UX
   useEffect(() => {
