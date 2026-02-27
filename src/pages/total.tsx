@@ -157,11 +157,13 @@ const SummaryPage = () => {
       return acc;
     }, []);
 
-    let lastActiveMonth = -1;
-    for (let i = 0; i < 12; i++) {
-      if (monthDistance[i] > 0 || monthTime[i] > 0) lastActiveMonth = i;
-    }
-    if (lastActiveMonth < 0) lastActiveMonth = 0;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const selectedYearNum = Number(selectedYear);
+    const isCurrentYear = selectedYearNum === currentYear;
+    const isPastYear = selectedYearNum < currentYear;
+    const cutoffMonth = isCurrentYear ? currentMonth : 11;
 
     const data = monthLabels.map((label, idx) => {
       const distanceKm = cumulativeDistance[idx] / M_TO_DIST;
@@ -171,15 +173,16 @@ const SummaryPage = () => {
         idx,
         distance: distanceKm,
         time: timeHours,
-        actualDistance: idx <= lastActiveMonth ? distanceKm : null,
-        actualTime: idx <= lastActiveMonth ? timeHours : null,
-        futureDistance: idx >= lastActiveMonth ? distanceKm : null,
-        futureTime: idx >= lastActiveMonth ? timeHours : null,
+        actualDistance: idx <= cutoffMonth ? distanceKm : null,
+        actualTime: idx <= cutoffMonth ? timeHours : null,
+        futureDistance:
+          isCurrentYear && idx >= cutoffMonth ? distanceKm : null,
+        futureTime: isCurrentYear && idx >= cutoffMonth ? timeHours : null,
       };
     });
 
-    return { data, lastActiveMonth };
-  }, [yearRuns]);
+    return { data, isCurrentYear, isPastYear };
+  }, [yearRuns, selectedYear]);
 
   const totalDistance = useMemo(() => {
     const sum = activities.reduce((acc, run) => acc + run.distance, 0);
