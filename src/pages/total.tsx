@@ -175,8 +175,7 @@ const SummaryPage = () => {
         time: timeHours,
         actualDistance: idx <= cutoffMonth ? distanceKm : null,
         actualTime: idx <= cutoffMonth ? timeHours : null,
-        futureDistance:
-          isCurrentYear && idx >= cutoffMonth ? distanceKm : null,
+        futureDistance: isCurrentYear && idx >= cutoffMonth ? distanceKm : null,
         futureTime: isCurrentYear && idx >= cutoffMonth ? timeHours : null,
       };
     });
