@@ -229,8 +229,15 @@ export const locationDetailForRun = (run: Activity): string => {
   if (!location) return '';
   const { city, province, country } = locationForRun(run);
   const subAreas = extractSubAreas(location);
+  const districtCandidates = subAreas.filter(
+    (area) =>
+      /(区|區|县|縣)$/.test(area) &&
+      !/(小区|小區|社区|社區|园区|園區|校区|校區)$/.test(area)
+  );
   const district =
-    subAreas.find((area) => /(区|區|县|縣)$/.test(area)) || '';
+    districtCandidates[0] ||
+    subAreas.find((area) => /(区|區|县|縣)$/.test(area)) ||
+    '';
   const street =
     subAreas.find((area) => /(街道|街|镇|鎮|乡|鄉)$/.test(area)) || '';
   const parts = [city, district, street].filter(Boolean);
