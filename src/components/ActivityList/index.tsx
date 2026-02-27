@@ -28,7 +28,7 @@ import { DIST_UNIT, M_TO_DIST } from '@/utils/utils';
 import RoutePreview from '@/components/RoutePreview';
 import { Activity } from '@/utils/utils';
 // Layout constants (avoid magic numbers)
-const ITEM_WIDTH = 232;
+const MIN_ITEM_WIDTH = 200;
 const ITEM_GAP = 16;
 
 const VIRTUAL_LIST_STYLES = {
@@ -107,6 +107,7 @@ interface ActivityCardProps {
   dailyDistances: number[];
   interval: string;
   activities?: Activity[]; // Add activities for day interval
+  cardWidth?: number;
 }
 
 interface ActivityGroups {
@@ -124,6 +125,7 @@ const ActivityCardInner: React.FC<ActivityCardProps> = ({
   dailyDistances,
   interval,
   activities = [],
+  cardWidth,
 }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const handleCardClick = () => {
@@ -181,6 +183,7 @@ const ActivityCardInner: React.FC<ActivityCardProps> = ({
       style={{
         cursor:
           interval === 'day' && activities.length > 0 ? 'pointer' : 'default',
+        width: cardWidth ? `${cardWidth}px` : undefined,
       }}
     >
       <div className={`${styles.cardInner} ${isFlipped ? styles.flipped : ''}`}>
@@ -322,6 +325,7 @@ const activityCardAreEqual = (
   const a1 = prev.activities || [];
   const a2 = next.activities || [];
   if (a1.length !== a2.length) return false;
+  if ((prev.cardWidth || 0) !== (next.cardWidth || 0)) return false;
   return true;
 };
 
@@ -333,14 +337,12 @@ const ActivityList: React.FC<{
   hideControls?: boolean;
   useContainerHeight?: boolean;
   useContentHeight?: boolean;
-  forceItemsPerRow?: number;
 }> = ({
   interval: controlledInterval,
   onIntervalChange,
   hideControls,
   useContainerHeight,
   useContentHeight,
-  forceItemsPerRow,
 }) => {
   const [interval, setInterval] = useState<IntervalType>(
     controlledInterval || 'month'
@@ -577,11 +579,11 @@ const ActivityList: React.FC<{
     [activitiesByInterval, interval]
   );
 
-  const itemWidth = ITEM_WIDTH;
   const gap = ITEM_GAP;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const filterRef = useRef<HTMLDivElement | null>(null);
   const [itemsPerRow, setItemsPerRow] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(0);
   const [rowHeight, setRowHeight] = useState<number>(360);
   const sampleRef = useRef<HTMLDivElement | null>(null);
   const [listHeight, setListHeight] = useState<number>(500);
@@ -590,17 +592,14 @@ const ActivityList: React.FC<{
   const virtualListRef = useRef<HTMLDivElement | null>(null);
 
   const calculateItemsPerRow = useCallback(() => {
-    if (forceItemsPerRow && forceItemsPerRow > 0) {
-      setItemsPerRow(forceItemsPerRow);
-      return;
-    }
     const container = containerRef.current;
     if (!container) return;
-    const containerWidth = container.clientWidth;
+    const width = container.clientWidth;
+    setContainerWidth(width);
     // Calculate how many items can fit in one row (considering gaps)
-    const count = Math.floor((containerWidth + gap) / (itemWidth + gap));
+    const count = Math.floor((width + gap) / (MIN_ITEM_WIDTH + gap));
     setItemsPerRow(Math.max(1, Math.min(5, count)));
-  }, [gap, itemWidth]);
+  }, [gap]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -609,14 +608,10 @@ const ActivityList: React.FC<{
     calculateItemsPerRow();
 
     // Use ResizeObserver to monitor container size changes
-    if (!forceItemsPerRow) {
-      const resizeObserver = new ResizeObserver(calculateItemsPerRow);
-      resizeObserver.observe(container);
-      return () => resizeObserver.disconnect();
-    }
-
-    return;
-  }, [calculateItemsPerRow, forceItemsPerRow]);
+    const resizeObserver = new ResizeObserver(calculateItemsPerRow);
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
+  }, [calculateItemsPerRow]);
 
   // when the interval changes, scroll the virtual list to top to improve UX
   useEffect(() => {
@@ -745,10 +740,12 @@ const ActivityList: React.FC<{
   }, [dataList, rowHeight]);
 
   // compute a row width so we can center the VirtualList and keep cards left-aligned inside
-  const rowWidth =
-    itemsPerRow < 1
-      ? '100%'
-      : `${itemsPerRow * itemWidth + Math.max(0, itemsPerRow - 1) * gap}px`;
+  const rowWidth = '100%';
+
+  const itemWidth =
+    itemsPerRow > 0 && containerWidth > 0
+      ? Math.floor((containerWidth - gap * (itemsPerRow - 1)) / itemsPerRow)
+      : MIN_ITEM_WIDTH;
 
   const loading = itemsPerRow < 1 || !rowHeight;
 
@@ -842,6 +839,7 @@ const ActivityList: React.FC<{
               <ActivityCard
                 key={dataList[0].period}
                 period={dataList[0].period}
+                cardWidth={itemWidth}
                 summary={{
                   totalDistance: dataList[0].summary.totalDistance,
                   averageSpeed: dataList[0].summary.totalTime
@@ -918,6 +916,7 @@ const ActivityList: React.FC<{
                           <ActivityCard
                             key={cardData.period}
                             period={cardData.period}
+                            cardWidth={itemWidth}
                             summary={{
                               totalDistance: cardData.summary.totalDistance,
                               averageSpeed: cardData.summary.totalTime
