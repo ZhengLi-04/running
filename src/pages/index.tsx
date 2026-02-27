@@ -164,6 +164,15 @@ const Index = () => {
       // default year
       setYear(y);
 
+      selectedRunIdRef.current = null;
+      selectedRunDateRef.current = null;
+      setSingleRunId(null);
+      setRunIndex(-1);
+      setTitle('');
+      if (window.location.hash) {
+        window.history.pushState(null, '', window.location.pathname);
+      }
+
       if ((viewState.zoom ?? 0) > 3 && bounds) {
         setViewState({
           ...bounds,
@@ -179,10 +188,26 @@ const Index = () => {
   );
 
   const changeCity = useCallback((city: string) => {
+    selectedRunIdRef.current = null;
+    selectedRunDateRef.current = null;
+    setSingleRunId(null);
+    setRunIndex(-1);
+    setTitle('');
+    if (window.location.hash) {
+      window.history.pushState(null, '', window.location.pathname);
+    }
     setSelectedCity(city);
   }, []);
 
   const changeMonth = useCallback((month: string) => {
+    selectedRunIdRef.current = null;
+    selectedRunDateRef.current = null;
+    setSingleRunId(null);
+    setRunIndex(-1);
+    setTitle('');
+    if (window.location.hash) {
+      window.history.pushState(null, '', window.location.pathname);
+    }
     setSelectedMonth(month);
   }, []);
 
@@ -285,6 +310,17 @@ const Index = () => {
       }
     }
   }, [runs, singleRunId, locateActivity]);
+
+  useEffect(() => {
+    selectedRunIdRef.current = null;
+    selectedRunDateRef.current = null;
+    setSingleRunId(null);
+    setRunIndex(-1);
+    setTitle('');
+    if (window.location.hash) {
+      window.history.pushState(null, '', window.location.pathname);
+    }
+  }, [selectedYear, selectedMonth, selectedCity]);
 
   // Update bounds when geoData changes
   useEffect(() => {

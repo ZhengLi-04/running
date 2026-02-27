@@ -298,9 +298,9 @@
 .filter-bar {
   padding: 16px 20px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: center;
+  flex-direction: column;
+  gap: 14px;
+  align-items: stretch;
 }
 
 .filter-section {
@@ -308,6 +308,7 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .filter-label {
@@ -339,7 +340,7 @@
 }
 
 .filter-link {
-  margin-left: auto;
+  justify-content: flex-end;
 }
 
 .filter-summary-link {
