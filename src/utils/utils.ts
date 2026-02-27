@@ -229,11 +229,11 @@ export const locationDetailForRun = (run: Activity): string => {
   if (!location) return '';
   const { city, province, country } = locationForRun(run);
   const subAreas = extractSubAreas(location);
-  const filtered = subAreas.filter(
-    (area) => area && area !== city && area !== province
-  );
-  filtered.sort((a, b) => areaRank(a) - areaRank(b));
-  const parts = [city, ...filtered].filter(Boolean);
+  const district =
+    subAreas.find((area) => /(区|區|县|縣)$/.test(area)) || '';
+  const street =
+    subAreas.find((area) => /(街道|街|镇|鎮|乡|鄉)$/.test(area)) || '';
+  const parts = [city, district, street].filter(Boolean);
   if (parts.length > 0) return parts.join(' ');
   return city || province || country || location;
 };
