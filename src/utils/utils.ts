@@ -166,6 +166,70 @@ const extractCoordinate = (str: string): [number, number] | null => {
   return null;
 };
 
+const inferLocationFromName = (
+  run: Activity
+): {
+  country: string;
+  province: string;
+  city: string;
+  detail: string[];
+} => {
+  const name = run.name || '';
+
+  if (
+    name.includes('香港') ||
+    name.includes('尖沙咀') ||
+    name.includes('西九')
+  ) {
+    return {
+      country: '中国',
+      province: '香港特别行政区',
+      city: '香港特别行政区',
+      detail:
+        name.includes('尖沙咀') || name.includes('西九') ? ['油尖旺區'] : [],
+    };
+  }
+
+  if (name.includes('沙县')) {
+    return {
+      country: '中国',
+      province: '福建省',
+      city: '三明市',
+      detail: ['沙县区'],
+    };
+  }
+
+  if (
+    name.includes('杭州') ||
+    name.includes('西湖') ||
+    name.includes('杨公堤')
+  ) {
+    return {
+      country: '中国',
+      province: '浙江省',
+      city: '杭州市',
+      detail:
+        name.includes('西湖') || name.includes('杨公堤') ? ['西湖区'] : [],
+    };
+  }
+
+  if (name.includes('金华')) {
+    return {
+      country: '中国',
+      province: '浙江省',
+      city: '金华市',
+      detail: [],
+    };
+  }
+
+  return {
+    country: '',
+    province: '',
+    city: '',
+    detail: [],
+  };
+};
+
 const cities = chinaCities.map((c) => c.name);
 const locationCache = new Map<number, ReturnType<typeof locationForRun>>();
 // what about oversea?
@@ -224,6 +288,13 @@ const locationForRun = (
     province = city;
   }
 
+  if (!city && !province && !country) {
+    const inferred = inferLocationFromName(run);
+    city = inferred.city;
+    province = inferred.province;
+    country = inferred.country;
+  }
+
   const r = { country, province, city, coordinate };
   locationCache.set(run.run_id, r);
   return r;
@@ -231,7 +302,11 @@ const locationForRun = (
 
 export const locationDetailForRun = (run: Activity): string => {
   const location = run.location_country || '';
-  if (!location) return '';
+  if (!location) {
+    const inferred = inferLocationFromName(run);
+    const parts = [inferred.city, ...inferred.detail].filter(Boolean);
+    return parts.join(' ');
+  }
   const { city, province, country } = locationForRun(run);
   const subAreas = extractSubAreas(location);
   const districtCandidates = subAreas.filter(
