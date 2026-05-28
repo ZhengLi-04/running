@@ -55,11 +55,27 @@ export interface Activity {
   streak: number;
 }
 
-const areaRank = (name: string): number => {
-  if (name.endsWith('市')) return 1;
-  if (/(区|區|县|縣)$/.test(name)) return 2;
-  if (/(街道|街|镇|鎮|乡|鄉)$/.test(name)) return 3;
-  return 4;
+export type SportFilter = 'all' | 'running' | 'cycling' | 'walking' | 'hiking';
+
+const SPORT_FILTER_LABELS: Record<SportFilter, string> = {
+  all: 'All',
+  running: 'Run',
+  cycling: 'Ride',
+  walking: 'Walk',
+  hiking: 'Hike',
+};
+
+const normalizeSportType = (type: string): SportFilter => {
+  if (type === 'Run' || type === 'running') return 'running';
+  if (type === 'Ride' || type === 'cycling') return 'cycling';
+  if (type === 'Walk' || type === 'walking') return 'walking';
+  if (type === 'Hike' || type === 'hiking') return 'hiking';
+  return 'all';
+};
+
+const matchesSportType = (run: Activity, sportType: SportFilter) => {
+  if (sportType === 'all') return true;
+  return normalizeSportType(run.type) === sportType;
 };
 
 const titleForShow = (run: Activity): string => {
@@ -120,17 +136,6 @@ const extractCities = (str: string): string[] => {
   const locations = [];
   let match;
   const pattern = /([\u4e00-\u9fa5]{2,}(市|自治州|特别行政区|盟|地区))/g;
-  while ((match = pattern.exec(str)) !== null) {
-    locations.push(match[0]);
-  }
-
-  return locations;
-};
-
-const extractDistricts = (str: string): string[] => {
-  const locations = [];
-  let match;
-  const pattern = /([\u4e00-\u9fa5]{2,}(区|县))/g;
   while ((match = pattern.exec(str)) !== null) {
     locations.push(match[0]);
   }
@@ -549,6 +554,9 @@ export {
   formatPace,
   scrollToMap,
   locationForRun,
+  normalizeSportType,
+  matchesSportType,
+  SPORT_FILTER_LABELS,
   intComma,
   pathForRun,
   geoJsonForRuns,

@@ -1,5 +1,10 @@
 import { useMemo } from 'react';
-import { locationForRun, titleForRun } from '@/utils/utils';
+import {
+  locationForRun,
+  titleForRun,
+  normalizeSportType,
+  SPORT_FILTER_LABELS,
+} from '@/utils/utils';
 import activities from '@/static/activities.json';
 import { COUNTRY_STANDARDIZATION } from '@/static/city';
 
@@ -12,6 +17,8 @@ const standardizeCountryName = (country: string): string => {
   return country;
 };
 
+const SPORT_FILTER_ORDER = ['all', 'running', 'cycling', 'walking', 'hiking'];
+
 const useActivities = () => {
   const processedData = useMemo(() => {
     const cities: Record<string, number> = {};
@@ -19,9 +26,11 @@ const useActivities = () => {
     const provinces: Set<string> = new Set();
     const countries: Set<string> = new Set();
     const years: Set<string> = new Set();
+    const sportTypes: Set<string> = new Set();
 
     activities.forEach((run) => {
       const location = locationForRun(run);
+      sportTypes.add(normalizeSportType(run.type));
 
       const periodName = titleForRun(run);
       if (periodName) {
@@ -49,6 +58,12 @@ const useActivities = () => {
     return {
       activities,
       years: yearsArray,
+      sportTypes: SPORT_FILTER_ORDER.filter(
+        (type) => type === 'all' || sportTypes.has(type)
+      ).map((type) => ({
+        value: type,
+        label: SPORT_FILTER_LABELS[type as keyof typeof SPORT_FILTER_LABELS],
+      })),
       countries: [...countries],
       provinces: [...provinces],
       cities,

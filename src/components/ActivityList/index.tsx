@@ -24,7 +24,12 @@ import { ACTIVITY_TOTAL, LOADING_TEXT } from '@/utils/const';
 import { totalStat, yearSummaryStats } from '@assets/index';
 import { loadSvgComponent } from '@/utils/svgUtils';
 import { SHOW_ELEVATION_GAIN, HOME_PAGE_TITLE } from '@/utils/const';
-import { DIST_UNIT, M_TO_DIST } from '@/utils/utils';
+import {
+  DIST_UNIT,
+  M_TO_DIST,
+  SportFilter,
+  matchesSportType,
+} from '@/utils/utils';
 import RoutePreview from '@/components/RoutePreview';
 import { Activity } from '@/utils/utils';
 // Layout constants (avoid magic numbers)
@@ -337,12 +342,14 @@ const ActivityList: React.FC<{
   hideControls?: boolean;
   useContainerHeight?: boolean;
   useContentHeight?: boolean;
+  sportType?: SportFilter;
 }> = ({
   interval: controlledInterval,
   onIntervalChange,
   hideControls,
   useContainerHeight,
   useContentHeight,
+  sportType: controlledSportType,
 }) => {
   const [interval, setInterval] = useState<IntervalType>(
     controlledInterval || 'month'
@@ -456,6 +463,12 @@ const ActivityList: React.FC<{
     }
   }, [controlledInterval]);
 
+  useEffect(() => {
+    if (controlledSportType) {
+      setSportType(controlledSportType);
+    }
+  }, [controlledSportType]);
+
   function convertTimeToSeconds(time: string): number {
     const [hours, minutes, seconds] = time.split(':').map(Number);
     return hours * 3600 + minutes * 60 + seconds;
@@ -466,16 +479,9 @@ const ActivityList: React.FC<{
     sportTypeArg: string
   ): ActivityGroups {
     return (activities as Activity[])
-      .filter((activity) => {
-        if (sportTypeArg === 'all') return true;
-        if (sportTypeArg === 'running')
-          return activity.type === 'running' || activity.type === 'Run';
-        if (sportTypeArg === 'walking')
-          return activity.type === 'walking' || activity.type === 'Walk';
-        if (sportTypeArg === 'cycling')
-          return activity.type === 'cycling' || activity.type === 'Ride';
-        return activity.type === sportTypeArg;
-      })
+      .filter((activity) =>
+        matchesSportType(activity, sportTypeArg as SportFilter)
+      )
       .reduce((acc: ActivityGroups, activity) => {
         const date = new Date(activity.start_date_local);
         let key: string;

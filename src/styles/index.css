@@ -435,6 +435,10 @@
   margin-top: 12px;
 }
 
+.summary-hero .summary-tabs {
+  margin-top: 12px;
+}
+
 .summary-heatmap #svgStat {
   padding-top: 8px;
 }
@@ -524,6 +528,16 @@
 .summary-year-svg svg {
   display: block;
   margin: 0;
+}
+
+.summary-year-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-muted);
+  line-height: 1.6;
+  text-align: center;
+  min-height: 220px;
 }
 
 .summary-year-stats {

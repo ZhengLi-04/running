@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { useMemo, useState, lazy, Suspense } from 'react';
+import { useMemo, useState, lazy, Suspense, useEffect } from 'react';
 import {
   AreaChart,
   Area,
@@ -21,26 +21,39 @@ import { loadSvgComponent } from '@/utils/svgUtils';
 import {
   DIST_UNIT,
   M_TO_DIST,
+  SportFilter,
   convertMovingTime2Sec,
   formatPace,
-  locationForRun,
   locationDetailForRun,
+  matchesSportType,
+  SPORT_FILTER_LABELS,
 } from '@/utils/utils';
 import { Activity } from '@/utils/utils';
 
 const SummaryPage = () => {
   const { theme } = useTheme();
   const { siteTitle } = useSiteMetadata();
-  const { activities, years, cities } = useActivities();
-  const [selectedYear, setSelectedYear] = useState(years[0] || '');
+  const { activities, sportTypes } = useActivities();
+  const [selectedSport, setSelectedSport] = useState<SportFilter>('all');
+  const [selectedYear, setSelectedYear] = useState('');
   const [reportInterval, setReportInterval] = useState<
     'year' | 'month' | 'week' | 'day'
   >('week');
   const [topRunsCount, setTopRunsCount] = useState(5);
 
+  const filteredActivities = useMemo(() => {
+    return activities.filter((run) => matchesSportType(run, selectedSport));
+  }, [activities, selectedSport]);
+
+  const filteredYears = useMemo(() => {
+    return Array.from(
+      new Set(filteredActivities.map((run) => run.start_date_local.slice(0, 4)))
+    ).sort((a, b) => Number(b) - Number(a));
+  }, [filteredActivities]);
+
   const topLocations = useMemo(() => {
     const map = new Map<string, number>();
-    activities.forEach((run) => {
+    filteredActivities.forEach((run) => {
       const location =
         locationDetailForRun(run) || run.location_country || 'Unknown';
       map.set(location, (map.get(location) || 0) + run.distance);
@@ -48,17 +61,17 @@ const SummaryPage = () => {
     const list = Array.from(map.entries());
     list.sort((a, b) => b[1] - a[1]);
     return list.slice(0, 6);
-  }, [activities]);
+  }, [filteredActivities]);
 
   const topRuns = useMemo(() => {
-    return activities
+    return filteredActivities
       .slice()
       .sort((a, b) => b.distance - a.distance)
       .slice(0, topRunsCount);
-  }, [activities, topRunsCount]);
+  }, [filteredActivities, topRunsCount]);
 
   const latestRuns = useMemo(() => {
-    return activities
+    return filteredActivities
       .slice()
       .sort(
         (a, b) =>
@@ -66,7 +79,7 @@ const SummaryPage = () => {
           new Date(a.start_date_local).getTime()
       )
       .slice(0, 30);
-  }, [activities]);
+  }, [filteredActivities]);
 
   const YearSvg = useMemo(() => {
     if (!selectedYear) return null;
@@ -76,11 +89,11 @@ const SummaryPage = () => {
   }, [selectedYear]);
 
   const yearRuns = useMemo(() => {
-    if (!selectedYear) return activities;
-    return activities.filter(
+    if (!selectedYear) return filteredActivities;
+    return filteredActivities.filter(
       (run) => run.start_date_local.slice(0, 4) === selectedYear
     );
-  }, [activities, selectedYear]);
+  }, [filteredActivities, selectedYear]);
 
   const yearStats = useMemo(() => {
     const totalDistance = yearRuns.reduce((acc, run) => acc + run.distance, 0);
@@ -184,29 +197,39 @@ const SummaryPage = () => {
   }, [yearRuns, selectedYear]);
 
   const totalDistance = useMemo(() => {
-    const sum = activities.reduce((acc, run) => acc + run.distance, 0);
+    const sum = filteredActivities.reduce((acc, run) => acc + run.distance, 0);
     return `${(sum / M_TO_DIST).toFixed(1)} ${DIST_UNIT}`;
-  }, [activities]);
+  }, [filteredActivities]);
 
   const totalDuration = useMemo(() => {
-    const seconds = activities.reduce(
+    const seconds = filteredActivities.reduce(
       (acc, run) => acc + convertMovingTime2Sec(run.moving_time),
       0
     );
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-  }, [activities]);
+  }, [filteredActivities]);
 
   const totalCities = useMemo(() => {
     return new Set(
-      activities
+      filteredActivities
         .map((run) => {
           return locationDetailForRun(run) || run.location_country || '';
         })
         .filter((x) => x.length > 0)
     ).size;
-  }, [activities]);
+  }, [filteredActivities]);
+
+  useEffect(() => {
+    if (!filteredYears.length) {
+      setSelectedYear('');
+      return;
+    }
+    if (!selectedYear || !filteredYears.includes(selectedYear)) {
+      setSelectedYear(filteredYears[0]);
+    }
+  }, [filteredYears, selectedYear]);
 
   return (
     <Layout>
@@ -222,10 +245,26 @@ const SummaryPage = () => {
               年度、月度、地点与线路的完整报告，集中在一个页面里。
             </p>
             <div className="hero-meta">
-              <span className="pill">{activities.length} Activities</span>
+              <span className="pill">
+                {filteredActivities.length} Activities
+              </span>
               <span className="pill">Total Distance: {totalDistance}</span>
               <span className="pill">Total Time: {totalDuration}</span>
               <span className="pill">Total Cities: {totalCities}</span>
+            </div>
+            <div className="summary-tabs">
+              {sportTypes.map((item) => (
+                <button
+                  key={item.value}
+                  className={`filter-pill ${
+                    selectedSport === item.value ? 'filter-pill-active' : ''
+                  }`}
+                  type="button"
+                  onClick={() => setSelectedSport(item.value)}
+                >
+                  {item.label}
+                </button>
+              ))}
             </div>
           </div>
         </section>
@@ -238,7 +277,7 @@ const SummaryPage = () => {
             </div>
             <div className="card-body">
               <div className="summary-year-tabs">
-                {years.map((y) => (
+                {filteredYears.map((y) => (
                   <button
                     key={y}
                     className={`filter-pill ${
@@ -252,11 +291,18 @@ const SummaryPage = () => {
                 ))}
               </div>
               <div className="summary-year-content">
-                {YearSvg && (
+                {selectedSport === 'all' && YearSvg && (
                   <div className="summary-year-svg">
                     <Suspense fallback={<div>Loading...</div>}>
                       <YearSvg className="year-svg w-full" />
                     </Suspense>
+                  </div>
+                )}
+                {selectedSport !== 'all' && (
+                  <div className="summary-year-svg summary-year-placeholder">
+                    Heatmap currently shows all activities. The charts and stats
+                    on the right are filtered to{' '}
+                    {SPORT_FILTER_LABELS[selectedSport]}.
                   </div>
                 )}
                 <div className="summary-year-trends">
@@ -353,7 +399,7 @@ const SummaryPage = () => {
                 </div>
               </div>
               <div className="summary-year-stats">
-                <span className="pill">Runs: {yearStats.runs}</span>
+                <span className="pill">Activities: {yearStats.runs}</span>
                 <span className="pill">Distance: {yearStats.distance}</span>
                 <span className="pill">Time: {yearStats.time}</span>
                 <span className="pill">Avg Pace: {yearStats.pace}</span>
@@ -402,7 +448,7 @@ const SummaryPage = () => {
                   </label>
                 </div>
               </div>
-              <p className="card-subtitle">最长的几次跑步记录</p>
+              <p className="card-subtitle">距离最长的几次运动记录</p>
             </div>
             <div className="card-body">
               <div className="summary-list">
@@ -449,6 +495,7 @@ const SummaryPage = () => {
               onIntervalChange={setReportInterval}
               hideControls
               useContentHeight
+              sportType={selectedSport}
             />
           </div>
         </section>

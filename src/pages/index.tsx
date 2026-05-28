@@ -9,6 +9,8 @@ import { useInterval } from '@/hooks/useInterval';
 import {
   Activity,
   IViewState,
+  SportFilter,
+  SPORT_FILTER_LABELS,
   DIST_UNIT,
   ELEV_UNIT,
   M_TO_DIST,
@@ -18,6 +20,7 @@ import {
   formatRunTime,
   locationForRun,
   locationDetailForRun,
+  matchesSportType,
   filterCityRuns,
   filterMonthRuns,
   filterYearRuns,
@@ -32,7 +35,7 @@ import { useTheme, useThemeChangeCounter } from '@/hooks/useTheme';
 
 const Index = () => {
   const { siteTitle, siteUrl } = useSiteMetadata();
-  const { activities, thisYear, years, cities } = useActivities();
+  const { activities, thisYear, sportTypes } = useActivities();
   const themeChangeCounter = useThemeChangeCounter();
   const [year, setYear] = useState(thisYear);
   const [runIndex, setRunIndex] = useState(-1);
@@ -41,6 +44,7 @@ const Index = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [currentAnimationIndex, setCurrentAnimationIndex] = useState(0);
   const [animationRuns, setAnimationRuns] = useState<Activity[]>([]);
+  const [selectedSport, setSelectedSport] = useState<SportFilter>('all');
   const [selectedYear, setSelectedYear] = useState(thisYear);
   const [selectedMonth, setSelectedMonth] = useState('Total');
   const [selectedCity, setSelectedCity] = useState('Total');
@@ -89,9 +93,13 @@ const Index = () => {
     };
   }, []);
 
+  const sportActivities = useMemo(() => {
+    return activities.filter((run) => matchesSportType(run, selectedSport));
+  }, [activities, selectedSport]);
+
   // Memoize expensive calculations
   const runs = useMemo(() => {
-    return activities
+    return sportActivities
       .filter((run) => {
         const matchYear =
           selectedYear === 'Total' ? true : filterYearRuns(run, selectedYear);
@@ -104,7 +112,7 @@ const Index = () => {
         return matchYear && matchMonth && matchCity;
       })
       .sort(sortDateFunc);
-  }, [activities, selectedYear, selectedMonth, selectedCity]);
+  }, [sportActivities, selectedYear, selectedMonth, selectedCity]);
 
   const geoData = useMemo(() => {
     return geoJsonForRuns(runs);
@@ -213,6 +221,21 @@ const Index = () => {
       window.history.pushState(null, '', window.location.pathname);
     }
     setSelectedMonth(month);
+  }, []);
+
+  const changeSport = useCallback((sport: string) => {
+    selectedRunIdRef.current = null;
+    selectedRunDateRef.current = null;
+    setSingleRunId(null);
+    setRunIndex(-1);
+    setTitle('');
+    setSelectedSport(sport);
+    setSelectedYear('Total');
+    setSelectedMonth('Total');
+    setSelectedCity('Total');
+    if (window.location.hash) {
+      window.history.pushState(null, '', window.location.pathname);
+    }
   }, []);
 
   const locateActivity = useCallback(
@@ -329,7 +352,7 @@ const Index = () => {
     if (window.location.hash) {
       window.history.pushState(null, '', window.location.pathname);
     }
-  }, [selectedYear, selectedMonth, selectedCity]);
+  }, [selectedSport, selectedYear, selectedMonth, selectedCity]);
 
   // Update bounds when geoData changes
   useEffect(() => {
@@ -410,29 +433,60 @@ const Index = () => {
   const { theme } = useTheme();
 
   const yearsWithTotal = useMemo(() => {
-    const list = years.slice();
+    const list = sportActivities.map((run) => run.start_date_local.slice(0, 4));
     list.unshift(thisYear);
     const unique = Array.from(new Set(list));
     return ['Total', ...unique];
-  }, [years, thisYear]);
+  }, [sportActivities, thisYear]);
 
   const months = useMemo(() => {
     if (selectedYear === 'Total') {
       return [];
     }
     const monthSet = new Set(
-      activities
+      sportActivities
         .filter((run) => filterYearRuns(run, selectedYear))
         .map((run) => run.start_date_local.slice(0, 7))
     );
     return ['Total', ...Array.from(monthSet).sort().reverse()];
-  }, [activities, selectedYear]);
+  }, [sportActivities, selectedYear]);
 
   const topCities = useMemo(() => {
-    const list = Object.entries(cities);
-    list.sort((a, b) => b[1] - a[1]);
-    return list.slice(0, 6);
-  }, [cities]);
+    const cityMap = new Map<string, number>();
+    sportActivities
+      .filter((run) =>
+        selectedYear === 'Total' ? true : filterYearRuns(run, selectedYear)
+      )
+      .filter((run) =>
+        selectedMonth === 'Total' ? true : filterMonthRuns(run, selectedMonth)
+      )
+      .forEach((run) => {
+        const { city, province, country } = locationForRun(run);
+        const location = city || province || country;
+        if (!location) return;
+        cityMap.set(location, (cityMap.get(location) || 0) + run.distance);
+      });
+    return Array.from(cityMap.entries()).sort((a, b) => b[1] - a[1]);
+  }, [sportActivities, selectedYear, selectedMonth]);
+
+  useEffect(() => {
+    if (!yearsWithTotal.includes(selectedYear)) {
+      setSelectedYear('Total');
+    }
+  }, [yearsWithTotal, selectedYear]);
+
+  useEffect(() => {
+    if (selectedMonth !== 'Total' && !months.includes(selectedMonth)) {
+      setSelectedMonth('Total');
+    }
+  }, [months, selectedMonth]);
+
+  useEffect(() => {
+    const cityNames = ['Total', ...topCities.map(([city]) => city)];
+    if (!cityNames.includes(selectedCity)) {
+      setSelectedCity('Total');
+    }
+  }, [topCities, selectedCity]);
 
   const selectedRun = useMemo(() => {
     if (!runs.length) return null;
@@ -466,6 +520,13 @@ const Index = () => {
     };
   }, [selectedRun]);
 
+  const defaultMapTitle = useMemo(() => {
+    const sportLabel =
+      selectedSport === 'all' ? 'Activity' : SPORT_FILTER_LABELS[selectedSport];
+    const periodLabel = selectedYear === 'Total' ? 'Total' : selectedYear;
+    return `${periodLabel} ${sportLabel} Map`;
+  }, [selectedSport, selectedYear]);
+
   return (
     <Layout>
       <Helmet>
@@ -485,6 +546,23 @@ const Index = () => {
         </section>
 
         <section className="card filter-bar">
+          <div className="filter-section">
+            <span className="filter-label">Sports</span>
+            <div className="filter-options">
+              {sportTypes.map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => changeSport(item.value)}
+                  className={`filter-pill ${
+                    selectedSport === item.value ? 'filter-pill-active' : ''
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="filter-section">
             <span className="filter-label">Years</span>
             <div className="filter-options">
@@ -558,9 +636,9 @@ const Index = () => {
           <section className="card run-list-card">
             <div className="card-header">
               <div className="card-header-row">
-                <h2 className="card-title">Run List</h2>
+                <h2 className="card-title">Activity List</h2>
                 <div className="run-list-meta">
-                  <span className="pill">{runs.length} Runs</span>
+                  <span className="pill">{runs.length} Activities</span>
                 </div>
               </div>
               <p className="card-subtitle">当前筛选结果</p>
@@ -610,7 +688,7 @@ const Index = () => {
           <div className="dashboard-main">
             <section className="card map-card" id="map-container">
               <div className="card-header">
-                <h2 className="card-title">{title || `${year} Running Map`}</h2>
+                <h2 className="card-title">{title || defaultMapTitle}</h2>
                 <p className="card-subtitle">
                   {selectedRun
                     ? locationDetailForRun(selectedRun) || '地图与路线概览'
