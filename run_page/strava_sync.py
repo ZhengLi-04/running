@@ -1,8 +1,26 @@
 import argparse
 import json
+import sys
 
 from config import JSON_FILE, SQL_FILE
 from generator import Generator
+from stravalib.exc import Fault
+
+
+def explain_strava_fault(error: Fault) -> str:
+    message = str(error)
+    if "Application" in message and "Inactive" in message:
+        return (
+            "Strava rejected the request because the API application is inactive. "
+            "Reactivate the app in the Strava API Settings Dashboard and make sure "
+            "the app owner account meets Strava's current developer requirements."
+        )
+    if "RefreshToken" in message and "invalid" in message.lower():
+        return (
+            "Strava rejected the refresh token. Update STRAVA_REFRESH_TOKEN in "
+            "GitHub Actions secrets with a freshly authorized token."
+        )
+    return f"Strava sync failed: {message}"
 
 
 # for only run type, we use the same logic as garmin_sync
@@ -39,9 +57,13 @@ if __name__ == "__main__":
         help="if is only for running",
     )
     options = parser.parse_args()
-    run_strava_sync(
-        options.client_id,
-        options.client_secret,
-        options.refresh_token,
-        only_run=options.only_run,
-    )
+    try:
+        run_strava_sync(
+            options.client_id,
+            options.client_secret,
+            options.refresh_token,
+            only_run=options.only_run,
+        )
+    except Fault as error:
+        print(explain_strava_fault(error), file=sys.stderr)
+        raise SystemExit(1) from error
